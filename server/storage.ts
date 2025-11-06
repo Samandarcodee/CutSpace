@@ -102,7 +102,7 @@ export class MemStorage implements IStorage {
 
   async createBarbershop(barbershop: InsertBarbershop): Promise<Barbershop> {
     const id = randomUUID();
-    const newShop: Barbershop = { ...barbershop, id, reviewCount: 0 };
+    const newShop: Barbershop = { ...barbershop, id, rating: barbershop.rating || 0, reviewCount: 0 };
     this.barbershops.set(id, newShop);
     return newShop;
   }
