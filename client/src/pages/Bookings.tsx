@@ -1,68 +1,68 @@
 import { useState } from "react";
 import BookingCard from "@/components/BookingCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+import type { Booking, Barbershop } from "@shared/schema";
 
-type BookingStatus = "pending" | "accepted" | "rejected";
-
-interface Booking {
-  id: string;
-  customerName: string;
-  service: string;
-  date: string;
-  time: string;
-  status: BookingStatus;
-  barbershopName: string;
-}
-
-const initialBookings: Booking[] = [
-  {
-    id: "1",
-    customerName: "Akmal Rahimov",
-    service: "Soch olish",
-    date: "15 Noyabr, 2025",
-    time: "14:00",
-    status: "pending",
-    barbershopName: "Premium Barber Shop",
-  },
-  {
-    id: "2",
-    customerName: "Sardor Karimov",
-    service: "Soqol qirish",
-    date: "14 Noyabr, 2025",
-    time: "16:00",
-    status: "accepted",
-    barbershopName: "Classic Barber",
-  },
-  {
-    id: "3",
-    customerName: "Javohir Alimov",
-    service: "Styling",
-    date: "13 Noyabr, 2025",
-    time: "11:00",
-    status: "rejected",
-    barbershopName: "Modern Style Barber",
-  },
-];
+type BookingWithShop = Booking & { barbershopName: string };
 
 export default function Bookings() {
-  const [bookings, setBookings] = useState<Booking[]>(initialBookings);
   const [viewMode, setViewMode] = useState<"customer" | "barber">("customer");
 
+  const { data: bookings = [], isLoading: bookingsLoading } = useQuery<Booking[]>({
+    queryKey: ["/api/bookings"],
+  });
+
+  const { data: barbershops = [] } = useQuery<Barbershop[]>({
+    queryKey: ["/api/barbershops"],
+  });
+
+  const acceptMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return await apiRequest(`/api/bookings/${id}/accept`, "POST", {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
+    },
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return await apiRequest(`/api/bookings/${id}/reject`, "POST", {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
+    },
+  });
+
   const handleAccept = (id: string) => {
-    setBookings(prev =>
-      prev.map(b => (b.id === id ? { ...b, status: "accepted" as const } : b))
-    );
+    acceptMutation.mutate(id);
   };
 
   const handleReject = (id: string) => {
-    setBookings(prev =>
-      prev.map(b => (b.id === id ? { ...b, status: "rejected" as const } : b))
-    );
+    rejectMutation.mutate(id);
   };
 
-  const pendingBookings = bookings.filter(b => b.status === "pending");
-  const acceptedBookings = bookings.filter(b => b.status === "accepted");
-  const rejectedBookings = bookings.filter(b => b.status === "rejected");
+  const bookingsWithShop: BookingWithShop[] = bookings.map(booking => {
+    const shop = barbershops.find(s => s.id === booking.barbershopId);
+    return {
+      ...booking,
+      barbershopName: shop?.name || "Noma'lum",
+    };
+  });
+
+  const pendingBookings = bookingsWithShop.filter(b => b.status === "pending");
+  const acceptedBookings = bookingsWithShop.filter(b => b.status === "accepted");
+  const rejectedBookings = bookingsWithShop.filter(b => b.status === "rejected");
+
+  if (bookingsLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Yuklanmoqda...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-20">

@@ -3,15 +3,13 @@ import { Button } from "@/components/ui/button";
 import StatusBadge from "./StatusBadge";
 import { Calendar, Clock, User, Scissors } from "lucide-react";
 
-type BookingStatus = "pending" | "accepted" | "rejected";
-
 interface BookingCardProps {
   id: string;
   customerName: string;
   service: string;
   date: string;
   time: string;
-  status: BookingStatus;
+  status: string;
   barbershopName: string;
   onAccept?: (id: string) => void;
   onReject?: (id: string) => void;
@@ -30,6 +28,10 @@ export default function BookingCard({
   onReject,
   isBarberView = false,
 }: BookingCardProps) {
+  const validStatus = (status === "pending" || status === "accepted" || status === "rejected") 
+    ? status 
+    : "pending";
+
   return (
     <Card className="p-4" data-testid={`booking-card-${id}`}>
       <div className="flex items-start justify-between mb-3">
@@ -37,7 +39,7 @@ export default function BookingCard({
           <User className="w-4 h-4 text-muted-foreground" />
           <span className="font-medium">{customerName}</span>
         </div>
-        <StatusBadge status={status} />
+        <StatusBadge status={validStatus} />
       </div>
 
       <div className="space-y-2 text-sm">
@@ -64,7 +66,7 @@ export default function BookingCard({
         </div>
       </div>
 
-      {isBarberView && status === "pending" && onAccept && onReject && (
+      {isBarberView && validStatus === "pending" && onAccept && onReject && (
         <div className="flex gap-2 mt-4">
           <Button
             variant="default"

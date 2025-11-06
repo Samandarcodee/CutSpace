@@ -8,6 +8,10 @@ import ReviewCard from "@/components/ReviewCard";
 import RatingStars from "@/components/RatingStars";
 import TimeSlotPicker from "@/components/TimeSlotPicker";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+import type { Barbershop, Review } from "@shared/schema";
+import { format } from "date-fns";
 
 import luxuryImage from '@assets/generated_images/Luxury_barbershop_interior_Tashkent_3c957162.png';
 import barberWork from '@assets/generated_images/Professional_barber_at_work_76c48d13.png';
@@ -16,53 +20,27 @@ import classicInterior from '@assets/generated_images/Classic_barbershop_interio
 import minimalistInterior from '@assets/generated_images/Minimalist_barbershop_interior_d115a3e8.png';
 import toolsStation from '@assets/generated_images/Professional_barbershop_tools_station_b59c156b.png';
 
-const barbershops = [
-  {
-    id: "1",
-    name: "Premium Barber Shop",
-    rating: 4.8,
-    address: "Amir Temur ko'chasi 15, Yunusobod tumani",
-    services: ["Soch olish - 50,000 so'm", "Soqol qirish - 30,000 so'm", "Styling - 40,000 so'm"],
-    images: [luxuryImage, barberWork],
-    reviewCount: 127,
-    reviews: [
-      { author: "Akmal Rahimov", rating: 5, comment: "Juda zo'r xizmat! Sartaroshlar professional va do'stona.", date: "3 kun oldin" },
-      { author: "Sardor Karimov", rating: 4, comment: "Yaxshi joy, sifatli ish. Narxlar ham qulay.", date: "1 hafta oldin" },
-      { author: "Bobur Toshmatov", rating: 5, comment: "Eng yaxshi sartaroshxona! Doimo shu yerga kelaman.", date: "2 hafta oldin" },
-    ],
-  },
-  {
-    id: "2",
-    name: "Classic Barber",
-    rating: 4.6,
-    address: "Mustaqillik ko'chasi 42, Mirobod tumani",
-    services: ["Soch olish - 45,000 so'm", "Soqol qirish - 25,000 so'm"],
-    images: [classicInterior, modernExterior],
-    reviewCount: 98,
-    reviews: [
-      { author: "Javohir Alimov", rating: 5, comment: "Klassik uslub va yuqori sifat. Tavsiya qilaman!", date: "5 kun oldin" },
-      { author: "Dilshod Ergashev", rating: 4, comment: "Yaxshi xizmat, lekin biroz kutishga to'g'ri keladi.", date: "1 hafta oldin" },
-      { author: "Otabek Nazarov", rating: 5, comment: "Professional ustalar. Juda mamnunman!", date: "3 hafta oldin" },
-    ],
-  },
-  {
-    id: "3",
-    name: "Modern Style Barber",
-    rating: 4.9,
-    address: "Buyuk Ipak Yo'li 88, Shayxontohur tumani",
-    services: ["Soch olish - 60,000 so'm", "Soqol qirish - 35,000 so'm", "Styling - 50,000 so'm"],
-    images: [minimalistInterior, toolsStation],
-    reviewCount: 156,
-    reviews: [
-      { author: "Farrux Karimov", rating: 5, comment: "Zamonaviy uslub va eng yaxshi xizmat. 100% tavsiya!", date: "2 kun oldin" },
-      { author: "Aziz Mahmudov", rating: 5, comment: "Ustalar o'z ishini yaxshi biladilar. Rahmat!", date: "1 hafta oldin" },
-      { author: "Sherzod Yunusov", rating: 4, comment: "Narx biroz yuqori, lekin sifat bunga arziydi.", date: "2 hafta oldin" },
-    ],
-  },
-];
+const imageMap: Record<string, string> = {
+  "/images/luxury.png": luxuryImage,
+  "/images/barber-work.png": barberWork,
+  "/images/modern-exterior.png": modernExterior,
+  "/images/classic.png": classicInterior,
+  "/images/minimalist.png": minimalistInterior,
+  "/images/tools.png": toolsStation,
+};
 
 export default function Home() {
-  const [selectedShop, setSelectedShop] = useState<typeof barbershops[0] | null>(null);
+  const { data: barbershops = [], isLoading } = useQuery<Barbershop[]>({
+    queryKey: ["/api/barbershops"],
+  });
+
+  const [selectedShopId, setSelectedShopId] = useState<string | null>(null);
+  const selectedShop = barbershops.find(s => s.id === selectedShopId);
+
+  const { data: reviews = [] } = useQuery<Review[]>({
+    queryKey: ["/api/barbershops", selectedShopId, "reviews"],
+    enabled: !!selectedShopId,
+  });
   const [showBooking, setShowBooking] = useState(false);
   const [selectedService, setSelectedService] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date>();
@@ -71,8 +49,56 @@ export default function Home() {
   const [reviewText, setReviewText] = useState("");
   const { toast } = useToast();
 
+  const createBookingMutation = useMutation({
+    mutationFn: async (data: { barbershopId: string; customerName: string; service: string; date: string; time: string }) => {
+      return await apiRequest("/api/bookings", "POST", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
+      toast({
+        title: "Muvaffaqiyatli band qilindi!",
+        description: "Sizning arizangiz sartaroshga yuborildi",
+      });
+      setShowBooking(false);
+      setSelectedShopId(null);
+      setSelectedService("");
+      setSelectedDate(undefined);
+      setSelectedTime("");
+    },
+    onError: () => {
+      toast({
+        title: "Xatolik",
+        description: "Band qilishda muammo yuz berdi",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const createReviewMutation = useMutation({
+    mutationFn: async (data: { barbershopId: string; author: string; rating: number; comment: string; date: string }) => {
+      return await apiRequest("/api/reviews", "POST", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/barbershops"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/barbershops", selectedShopId, "reviews"] });
+      toast({
+        title: "Sharh qo'shildi!",
+        description: "Rahmat, fikringiz biz uchun muhim",
+      });
+      setReviewRating(0);
+      setReviewText("");
+    },
+    onError: () => {
+      toast({
+        title: "Xatolik",
+        description: "Sharh qo'shishda muammo yuz berdi",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleBookNow = () => {
-    if (!selectedService || !selectedDate || !selectedTime) {
+    if (!selectedService || !selectedDate || !selectedTime || !selectedShopId) {
       toast({
         title: "Ma'lumot to'liq emas",
         description: "Iltimos, xizmat va vaqtni tanlang",
@@ -81,20 +107,17 @@ export default function Home() {
       return;
     }
 
-    toast({
-      title: "Muvaffaqiyatli band qilindi!",
-      description: "Sizning arizangiz sartaroshga yuborildi",
+    createBookingMutation.mutate({
+      barbershopId: selectedShopId,
+      customerName: "Akmal Rahimov",
+      service: selectedService,
+      date: format(selectedDate, "d MMMM, yyyy"),
+      time: selectedTime,
     });
-
-    setShowBooking(false);
-    setSelectedShop(null);
-    setSelectedService("");
-    setSelectedDate(undefined);
-    setSelectedTime("");
   };
 
   const handleSubmitReview = () => {
-    if (reviewRating === 0 || !reviewText.trim()) {
+    if (reviewRating === 0 || !reviewText.trim() || !selectedShopId) {
       toast({
         title: "Ma'lumot to'liq emas",
         description: "Iltimos, reyting va sharh matnini kiriting",
@@ -103,14 +126,22 @@ export default function Home() {
       return;
     }
 
-    toast({
-      title: "Sharh qo'shildi!",
-      description: "Rahmat, fikringiz biz uchun muhim",
+    createReviewMutation.mutate({
+      barbershopId: selectedShopId,
+      author: "Akmal Rahimov",
+      rating: reviewRating,
+      comment: reviewText,
+      date: "Hozirgina",
     });
-
-    setReviewRating(0);
-    setReviewText("");
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Yuklanmoqda...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -125,15 +156,16 @@ export default function Home() {
             <BarbershopCard
               key={shop.id}
               {...shop}
+              images={shop.images.map(img => imageMap[img] || img)}
               onViewDetails={(id) => {
-                setSelectedShop(barbershops.find((s) => s.id === id) || null);
+                setSelectedShopId(id);
               }}
             />
           ))}
         </div>
       </div>
 
-      <Dialog open={!!selectedShop && !showBooking} onOpenChange={() => setSelectedShop(null)}>
+      <Dialog open={!!selectedShop && !showBooking} onOpenChange={() => setSelectedShopId(null)}>
         <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{selectedShop?.name}</DialogTitle>
@@ -194,14 +226,15 @@ export default function Home() {
                   <Button
                     onClick={handleSubmitReview}
                     className="w-full"
+                    disabled={createReviewMutation.isPending}
                     data-testid="button-submit-review"
                   >
-                    Sharh qoldirish
+                    {createReviewMutation.isPending ? "Yuklanmoqda..." : "Sharh qoldirish"}
                   </Button>
                 </div>
 
-                {selectedShop?.reviews.map((review, idx) => (
-                  <ReviewCard key={idx} {...review} />
+                {reviews.map((review) => (
+                  <ReviewCard key={review.id} {...review} />
                 ))}
               </div>
             </TabsContent>
@@ -233,9 +266,10 @@ export default function Home() {
             <Button
               onClick={handleBookNow}
               className="w-full"
+              disabled={createBookingMutation.isPending}
               data-testid="button-book-now"
             >
-              Band qilish
+              {createBookingMutation.isPending ? "Yuklanmoqda..." : "Band qilish"}
             </Button>
           </div>
         </DialogContent>
