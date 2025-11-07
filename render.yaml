@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: toshkent-sartarosh
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TELEGRAM_BOT_TOKEN
+        value: 8555285589:AAEEaVbjFtXCRa54_VSxLIhTx6Pqy5f9bZc
+      - key: DATABASE_URL
+        fromDatabase:
+          name: toshkent-db
+          property: connectionString
+    
+databases:
+  - name: toshkent-db
+    plan: free
+    databaseName: toshkentdb
+    user: toshkentuser
+
