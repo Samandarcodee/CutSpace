@@ -4,6 +4,15 @@ import { storage } from "./storage";
 import { insertBookingSchema, insertReviewSchema, insertBarbershopSchema, insertUserSchema } from "@shared/schema";
 import { sendTelegramNotification } from "./telegram.js";
 import { authenticateUser, requireAdmin, requireBarber, parseTelegramWebAppData } from "./auth";
+import type { User } from "@shared/schema";
+
+// Helper function: BigInt ni string ga o'zgartirish
+function serializeUser(user: User) {
+  return {
+    ...user,
+    telegramId: user.telegramId.toString(),
+  };
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // ==================== AUTH ROUTES ====================
@@ -40,7 +49,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      res.json({ user });
+      res.json({ user: serializeUser(user) });
     } catch (error) {
       console.error("Auth error:", error);
       res.status(500).json({ error: "Authentication failed" });
@@ -50,7 +59,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Current user ma'lumotlari
   app.get("/api/auth/me", authenticateUser, async (req, res) => {
     const user = (req as any).user;
-    res.json({ user });
+    res.json({ user: serializeUser(user) });
   });
 
   // ==================== ADMIN ROUTES ====================
@@ -103,7 +112,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
-      res.json(user);
+      res.json(serializeUser(user));
     } catch (error) {
       console.error("Update user role error:", error);
       res.status(500).json({ error: "Failed to update user role" });
