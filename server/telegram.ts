@@ -73,7 +73,7 @@ Mini Appni ishga tushirish uchun quyidagi tugmani bosing! 👇
       bot?.sendMessage(chatId, welcomeMessage, {
         reply_markup: {
           keyboard: [
-            [{ text: "💈 Sartaroshxonalar" }, { text: "📅 Yozilish" }],
+            [{ text: "💈 Sartaroshxonalar" }, { text: "🗓️ Yozilish" }],
             [{ text: "ℹ️ Ma'lumot" }, { text: "📞 Bog'lanish" }]
           ],
           resize_keyboard: true
@@ -160,9 +160,9 @@ Mini App orqali:
         `;
         bot?.sendMessage(chatId, shopsMessage, { parse_mode: "Markdown" });
         
-      } else if (msg.text === "📅 Yozilish") {
+      } else if (msg.text === "🗓️ Yozilish") {
         bot?.sendMessage(chatId, `
-📅 Yozilish uchun:
+🗓️ Yozilish uchun:
 
 1. Web saytimizga kiring: ${WEB_APP_URL}
 2. Sartaroshxonani tanlang
