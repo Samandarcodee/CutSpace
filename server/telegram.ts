@@ -14,6 +14,9 @@ export function initializeTelegramBot() {
     return;
   }
 
+  // Production da faqat bitta instance ishlashi uchun
+  const isProduction = process.env.NODE_ENV === "production" || process.env.RENDER;
+  
   try {
     // Polling konfiguratsiyasi
     bot = new TelegramBot(BOT_TOKEN, {
@@ -25,6 +28,18 @@ export function initializeTelegramBot() {
         }
       }
     });
+    
+    // Production da polling error ni ignore qilish
+    if (isProduction) {
+      bot.on('polling_error', (error) => {
+        // 409 Conflict - boshqa instance ishlayapti, bu normal
+        if (error.message.includes('409')) {
+          console.log("ℹ️ Bot polling: boshqa instance ishlayapti (normal)");
+          return;
+        }
+        console.error('❌ Polling xatolik:', error.message);
+      });
+    }
     
     console.log("🤖 Telegram Bot ishga tushmoqda...");
     
