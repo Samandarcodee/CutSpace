@@ -22,14 +22,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Agar yo'q bo'lsa, yangi user yaratish
       if (!user) {
+        // Admin ID ni tekshirish
+        const isAdmin = telegramId === "5928372261" || telegramId === 5928372261;
         user = await storage.createUser({
           telegramId: BigInt(telegramId),
           firstName,
           lastName,
           username,
-          role: "customer",
+          role: isAdmin ? "admin" : "customer",
           barbershopId: null,
         });
+      } else {
+        // Agar user bor bo'lsa va admin ID bo'lsa, admin qilish
+        const isAdmin = telegramId === "5928372261" || telegramId === 5928372261;
+        if (isAdmin && user.role !== "admin") {
+          user = await storage.updateUserRole(user.id, "admin");
+        }
       }
 
       res.json({ user });
