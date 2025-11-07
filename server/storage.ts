@@ -243,7 +243,7 @@ export class DbStorage implements IStorage {
   private db;
 
   constructor() {
-    const databaseUrl = process.env.DATABASE_URL;
+    const databaseUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.RENDER_DATABASE_URL;
     
     if (!databaseUrl) {
       console.error("DATABASE_URL environment variable is not set");
