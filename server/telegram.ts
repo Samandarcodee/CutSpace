@@ -3,7 +3,7 @@ import type { Booking, Barbershop } from "@shared/schema";
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "8555285589:AAEEaVbjFtXCRa54_VSxLIhTx6Pqy5f9bZc";
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID || "";
-const WEB_APP_URL = process.env.WEB_APP_URL || "http://localhost:5000";
+const WEB_APP_URL = process.env.WEB_APP_URL || process.env.RENDER_EXTERNAL_URL || "https://cutspace.onrender.com";
 
 let bot: TelegramBot | null = null;
 
