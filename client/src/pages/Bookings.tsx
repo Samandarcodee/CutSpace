@@ -20,7 +20,7 @@ export default function Bookings() {
 
   const acceptMutation = useMutation({
     mutationFn: async (id: string) => {
-      return await apiRequest(`/api/bookings/${id}/accept`, "POST", {});
+      return await apiRequest("POST", `/api/bookings/${id}/accept`, {});
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
@@ -29,7 +29,7 @@ export default function Bookings() {
 
   const rejectMutation = useMutation({
     mutationFn: async (id: string) => {
-      return await apiRequest(`/api/bookings/${id}/reject`, "POST", {});
+      return await apiRequest("POST", `/api/bookings/${id}/reject`, {});
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });

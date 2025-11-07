@@ -1,16 +1,138 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertBookingSchema, insertReviewSchema } from "@shared/schema";
+import { insertBookingSchema, insertReviewSchema, insertBarbershopSchema, insertUserSchema } from "@shared/schema";
 import { sendTelegramNotification } from "./telegram.js";
+import { authenticateUser, requireAdmin, requireBarber, parseTelegramWebAppData } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // ==================== AUTH ROUTES ====================
+  
+  // Telegram orqali kirish / ro'yxatdan o'tish
+  app.post("/api/auth/telegram", async (req, res) => {
+    try {
+      const { telegramId, firstName, lastName, username } = req.body;
+      
+      if (!telegramId) {
+        return res.status(400).json({ error: "Telegram ID required" });
+      }
+
+      // User borligini tekshirish
+      let user = await storage.getUser(BigInt(telegramId));
+      
+      // Agar yo'q bo'lsa, yangi user yaratish
+      if (!user) {
+        user = await storage.createUser({
+          telegramId: BigInt(telegramId),
+          firstName,
+          lastName,
+          username,
+          role: "customer",
+          barbershopId: null,
+        });
+      }
+
+      res.json({ user });
+    } catch (error) {
+      console.error("Auth error:", error);
+      res.status(500).json({ error: "Authentication failed" });
+    }
+  });
+
+  // Current user ma'lumotlari
+  app.get("/api/auth/me", authenticateUser, async (req, res) => {
+    const user = (req as any).user;
+    res.json({ user });
+  });
+
+  // ==================== ADMIN ROUTES ====================
+  
+  // Admin: Yangi sartaroshxona qo'shish
+  app.post("/api/admin/barbershops", authenticateUser, requireAdmin, async (req, res) => {
+    try {
+      const validatedData = insertBarbershopSchema.parse(req.body);
+      const barbershop = await storage.createBarbershop(validatedData);
+      res.json(barbershop);
+    } catch (error) {
+      console.error("Create barbershop error:", error);
+      res.status(400).json({ error: "Invalid barbershop data" });
+    }
+  });
+
+  // Admin: Sartaroshxonani yangilash
+  app.put("/api/admin/barbershops/:id", authenticateUser, requireAdmin, async (req, res) => {
+    try {
+      const barbershop = await storage.updateBarbershop(req.params.id, req.body);
+      if (!barbershop) {
+        return res.status(404).json({ error: "Barbershop not found" });
+      }
+      res.json(barbershop);
+    } catch (error) {
+      console.error("Update barbershop error:", error);
+      res.status(500).json({ error: "Failed to update barbershop" });
+    }
+  });
+
+  // Admin: Sartaroshxonani o'chirish
+  app.delete("/api/admin/barbershops/:id", authenticateUser, requireAdmin, async (req, res) => {
+    try {
+      const success = await storage.deleteBarbershop(req.params.id);
+      if (!success) {
+        return res.status(404).json({ error: "Barbershop not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete barbershop error:", error);
+      res.status(500).json({ error: "Failed to delete barbershop" });
+    }
+  });
+
+  // Admin: User role ni o'zgartirish
+  app.put("/api/admin/users/:id/role", authenticateUser, requireAdmin, async (req, res) => {
+    try {
+      const { role, barbershopId } = req.body;
+      const user = await storage.updateUserRole(req.params.id, role, barbershopId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.json(user);
+    } catch (error) {
+      console.error("Update user role error:", error);
+      res.status(500).json({ error: "Failed to update user role" });
+    }
+  });
+
+  // ==================== BARBER ROUTES ====================
+  
+  // Barber: O'z sartaroshxonasining bookinglarini ko'rish
+  app.get("/api/barber/bookings", authenticateUser, requireBarber, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      
+      // Agar barber bo'lsa, faqat o'z sartaroshxonasining bookinglarini ko'rsatish
+      if (user.role === "barber" && user.barbershopId) {
+        const bookings = await storage.getBookingsByBarbershop(user.barbershopId);
+        return res.json(bookings);
+      }
+      
+      // Admin bo'lsa, barcha bookinglarni ko'rsatish
+      const bookings = await storage.getBookings();
+      res.json(bookings);
+    } catch (error) {
+      console.error("Get barber bookings error:", error);
+      res.status(500).json({ error: "Failed to fetch bookings" });
+    }
+  });
+
+  // ==================== PUBLIC ROUTES ====================
+
   // Get all barbershops
   app.get("/api/barbershops", async (_req, res) => {
     try {
       const barbershops = await storage.getBarbershops();
       res.json(barbershops);
     } catch (error) {
+      console.error("Error fetching barbershops:", error);
       res.status(500).json({ error: "Failed to fetch barbershops" });
     }
   });

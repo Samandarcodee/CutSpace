@@ -1,16 +1,31 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, timestamp, real } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, timestamp, real, bigint } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+
+// Users table - Telegram foydalanuvchilari
+export const users = pgTable("users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  telegramId: bigint("telegram_id", { mode: "bigint" }).notNull().unique(),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  username: text("username"),
+  role: text("role").notNull().default("customer"), // customer, barber, admin
+  barbershopId: varchar("barbershop_id"), // faqat barber uchun
+  createdAt: timestamp("created_at").defaultNow(),
+});
 
 export const barbershops = pgTable("barbershops", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
   rating: real("rating").notNull().default(0),
   address: text("address").notNull(),
+  phone: text("phone").notNull(),
   services: text("services").array().notNull(),
   images: text("images").array().notNull(),
   reviewCount: integer("review_count").notNull().default(0),
+  ownerId: varchar("owner_id").references(() => users.id), // sartaroshxona egasi
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const reviews = pgTable("reviews", {
@@ -34,9 +49,16 @@ export const bookings = pgTable("bookings", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Insert schemas
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertBarbershopSchema = createInsertSchema(barbershops).omit({
   id: true,
   reviewCount: true,
+  createdAt: true,
 });
 
 export const insertReviewSchema = createInsertSchema(reviews).omit({
@@ -50,6 +72,10 @@ export const insertBookingSchema = createInsertSchema(bookings).omit({
   status: true,
 });
 
+// Types
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type User = typeof users.$inferSelect;
+
 export type InsertBarbershop = z.infer<typeof insertBarbershopSchema>;
 export type Barbershop = typeof barbershops.$inferSelect;
 
@@ -58,3 +84,6 @@ export type Review = typeof reviews.$inferSelect;
 
 export type InsertBooking = z.infer<typeof insertBookingSchema>;
 export type Booking = typeof bookings.$inferSelect;
+
+// Role type
+export type UserRole = "customer" | "barber" | "admin";

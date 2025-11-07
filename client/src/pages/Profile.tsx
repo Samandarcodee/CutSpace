@@ -2,13 +2,19 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { User, Phone, MapPin, Calendar } from "lucide-react";
+import { useTelegram } from "@/contexts/TelegramContext";
 
 export default function Profile() {
+  const { user: telegramUser, webApp } = useTelegram();
+  
   const user = {
-    name: "Akmal Rahimov",
+    name: telegramUser 
+      ? `${telegramUser.first_name} ${telegramUser.last_name || ''}`.trim()
+      : "Mehmon",
     phone: "+998 90 123 45 67",
     address: "Toshkent, Yunusobod tumani",
     memberSince: "Yanvar 2024",
+    username: telegramUser?.username || null,
   };
 
   const stats = [
@@ -29,12 +35,15 @@ export default function Profile() {
             <div className="flex flex-col items-center text-center space-y-4">
               <Avatar className="w-20 h-20">
                 <AvatarFallback className="bg-primary/10 text-primary text-2xl">
-                  AR
+                  {user.name.split(' ').map(n => n[0]).join('').toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div>
                 <h2 className="text-xl font-bold">{user.name}</h2>
-                <p className="text-sm text-muted-foreground">Mijoz</p>
+                {user.username && (
+                  <p className="text-sm text-muted-foreground">@{user.username}</p>
+                )}
+                <p className="text-sm text-muted-foreground mt-1">Mijoz</p>
               </div>
             </div>
 

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import BarbershopCard from "@/components/BarbershopCard";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,6 +12,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Barbershop, Review } from "@shared/schema";
 import { format } from "date-fns";
+import { useTelegram } from "@/contexts/TelegramContext";
 
 import luxuryImage from '@assets/generated_images/Luxury_barbershop_interior_Tashkent_3c957162.png';
 import barberWork from '@assets/generated_images/Professional_barber_at_work_76c48d13.png';
@@ -30,6 +31,8 @@ const imageMap: Record<string, string> = {
 };
 
 export default function Home() {
+  const { user: telegramUser } = useTelegram();
+  
   const { data: barbershops = [], isLoading } = useQuery<Barbershop[]>({
     queryKey: ["/api/barbershops"],
   });
@@ -51,7 +54,8 @@ export default function Home() {
 
   const createBookingMutation = useMutation({
     mutationFn: async (data: { barbershopId: string; customerName: string; service: string; date: string; time: string }) => {
-      return await apiRequest("/api/bookings", "POST", data);
+      console.log("Booking data:", data);
+      return await apiRequest("POST", "/api/bookings", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
@@ -65,10 +69,11 @@ export default function Home() {
       setSelectedDate(undefined);
       setSelectedTime("");
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error("Booking error:", error);
       toast({
         title: "Xatolik",
-        description: "Band qilishda muammo yuz berdi",
+        description: error?.message || "Band qilishda muammo yuz berdi",
         variant: "destructive",
       });
     },
@@ -76,7 +81,7 @@ export default function Home() {
 
   const createReviewMutation = useMutation({
     mutationFn: async (data: { barbershopId: string; author: string; rating: number; comment: string; date: string }) => {
-      return await apiRequest("/api/reviews", "POST", data);
+      return await apiRequest("POST", "/api/reviews", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/barbershops"] });
@@ -107,11 +112,17 @@ export default function Home() {
       return;
     }
 
+    const formattedDate = format(selectedDate, "yyyy-MM-dd");
+    
+    const customerName = telegramUser 
+      ? `${telegramUser.first_name} ${telegramUser.last_name || ''}`.trim()
+      : "Mehmon";
+    
     createBookingMutation.mutate({
       barbershopId: selectedShopId,
-      customerName: "Akmal Rahimov",
+      customerName,
       service: selectedService,
-      date: format(selectedDate, "d MMMM, yyyy"),
+      date: formattedDate,
       time: selectedTime,
     });
   };
@@ -126,9 +137,13 @@ export default function Home() {
       return;
     }
 
+    const authorName = telegramUser 
+      ? `${telegramUser.first_name} ${telegramUser.last_name || ''}`.trim()
+      : "Mehmon";
+    
     createReviewMutation.mutate({
       barbershopId: selectedShopId,
-      author: "Akmal Rahimov",
+      author: authorName,
       rating: reviewRating,
       comment: reviewText,
       date: "Hozirgina",
@@ -169,6 +184,9 @@ export default function Home() {
         <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{selectedShop?.name}</DialogTitle>
+            <DialogDescription>
+              {selectedShop?.address}
+            </DialogDescription>
           </DialogHeader>
 
           <Tabs defaultValue="services" className="w-full">
@@ -246,6 +264,9 @@ export default function Home() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Yozilish</DialogTitle>
+            <DialogDescription>
+              Qulay vaqtni tanlang va band qiling
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
