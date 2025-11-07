@@ -73,6 +73,7 @@ Mini Appni ishga tushirish uchun quyidagi tugmani bosing! 👇
       bot?.sendMessage(chatId, welcomeMessage, {
         reply_markup: {
           keyboard: [
+            [{ text: "🚀 Mini App ni ochish", web_app: { url: WEB_APP_URL } }],
             [{ text: "💈 Sartaroshxonalar" }, { text: "🗓️ Yozilish" }],
             [{ text: "ℹ️ Ma'lumot" }, { text: "📞 Bog'lanish" }]
           ],
