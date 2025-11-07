@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "NODE_ENV=development tsx server/index.ts",
     "dev:windows": "set NODE_ENV=development&& tsx server/index.ts",
-    "build": "echo 'Build complete'",
+    "build": "vite build",
     "start": "NODE_ENV=production tsx server/index.ts",
     "check": "tsc",
     "db:push": "drizzle-kit push",
