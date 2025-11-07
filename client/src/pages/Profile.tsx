@@ -1,27 +1,44 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { User, Phone, MapPin, Calendar } from "lucide-react";
+import { User, Phone, MapPin, Calendar, Shield } from "lucide-react";
 import { useTelegram } from "@/contexts/TelegramContext";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
 
 export default function Profile() {
-  const { user: telegramUser, webApp } = useTelegram();
+  const { user: telegramUser, backendUser, isAdmin, refreshUser } = useTelegram();
+  
+  // Real bookings statistikasi
+  const { data: bookings = [] } = useQuery({
+    queryKey: ["/api/bookings"],
+  });
+  
+  const userBookings = bookings.filter((b: any) => 
+    b.customerName === `${telegramUser?.first_name} ${telegramUser?.last_name || ''}`.trim() ||
+    backendUser?.id === b.customerId
+  );
+  
+  const stats = [
+    { label: "Jami yozilishlar", value: userBookings.length.toString() },
+    { label: "Faol yozilishlar", value: userBookings.filter((b: any) => b.status === "pending" || b.status === "confirmed").length.toString() },
+    { label: "Bajarilgan", value: userBookings.filter((b: any) => b.status === "completed").length.toString() },
+  ];
   
   const user = {
-    name: telegramUser 
+    name: backendUser 
+      ? `${backendUser.firstName || ''} ${backendUser.lastName || ''}`.trim() || telegramUser?.first_name || "Mehmon"
+      : telegramUser 
       ? `${telegramUser.first_name} ${telegramUser.last_name || ''}`.trim()
       : "Mehmon",
-    phone: "+998 90 123 45 67",
-    address: "Toshkent, Yunusobod tumani",
-    memberSince: "Yanvar 2024",
-    username: telegramUser?.username || null,
+    phone: "+998 90 123 45 67", // TODO: Add phone to user schema
+    address: "Toshkent, Yunusobod tumani", // TODO: Add address to user schema
+    memberSince: backendUser?.createdAt 
+      ? new Date(backendUser.createdAt).toLocaleDateString('uz-UZ', { month: 'long', year: 'numeric' })
+      : "Yanvar 2024",
+    username: backendUser?.username || telegramUser?.username || null,
+    role: backendUser?.role || "customer",
   };
-
-  const stats = [
-    { label: "Jami yozilishlar", value: "12" },
-    { label: "Faol yozilishlar", value: "2" },
-    { label: "Bajarilgan", value: "10" },
-  ];
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -43,7 +60,10 @@ export default function Profile() {
                 {user.username && (
                   <p className="text-sm text-muted-foreground">@{user.username}</p>
                 )}
-                <p className="text-sm text-muted-foreground mt-1">Mijoz</p>
+                <p className="text-sm text-muted-foreground mt-1 flex items-center justify-center gap-1">
+                  {isAdmin && <Shield className="w-3 h-3" />}
+                  {user.role === "admin" ? "Admin" : user.role === "barber" ? "Sartarosh" : "Mijoz"}
+                </p>
               </div>
             </div>
 
@@ -77,12 +97,17 @@ export default function Profile() {
 
           <Card className="p-4">
             <div className="space-y-2">
-              <Button variant="outline" className="w-full justify-start" data-testid="button-edit-profile">
+              {isAdmin && (
+                <Link href="/admin">
+                  <Button variant="outline" className="w-full justify-start" data-testid="button-admin">
+                    <Shield className="w-4 h-4 mr-2" />
+                    Admin Panel
+                  </Button>
+                </Link>
+              )}
+              <Button variant="outline" className="w-full justify-start" data-testid="button-edit-profile" onClick={refreshUser}>
                 <User className="w-4 h-4 mr-2" />
-                Profilni tahrirlash
-              </Button>
-              <Button variant="outline" className="w-full justify-start text-destructive hover:text-destructive" data-testid="button-logout">
-                Chiqish
+                Ma'lumotlarni yangilash
               </Button>
             </div>
           </Card>
