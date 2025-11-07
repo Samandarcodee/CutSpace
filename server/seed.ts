@@ -1,6 +1,7 @@
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
-import { barbershops, reviews } from "@shared/schema";
+import { eq } from "drizzle-orm";
+import { barbershops, reviews, users } from "@shared/schema";
 
 // Seed database with initial data
 async function seed() {
@@ -15,6 +16,27 @@ async function seed() {
   const db = drizzle(sql);
 
   console.log("🌱 Seeding database...");
+
+  // Create admin user
+  const adminTelegramId = BigInt("5928372261");
+  const existingAdmin = await db.select().from(users).where(eq(users.telegramId, adminTelegramId)).limit(1);
+  
+  if (existingAdmin.length === 0) {
+    await db.insert(users).values({
+      telegramId: adminTelegramId,
+      firstName: "Admin",
+      lastName: "User",
+      username: "admin",
+      role: "admin",
+    });
+    console.log("✅ Created admin user (ID: 5928372261)");
+  } else {
+    // Update existing user to admin
+    await db.update(users)
+      .set({ role: "admin" })
+      .where(eq(users.telegramId, adminTelegramId));
+    console.log("✅ Updated user to admin (ID: 5928372261)");
+  }
 
   // Insert barbershops
   const insertedShops = await db
