@@ -8,6 +8,7 @@ import BottomNav from "@/components/BottomNav";
 import Home from "@/pages/Home";
 import Bookings from "@/pages/Bookings";
 import Profile from "@/pages/Profile";
+import Admin from "@/pages/Admin";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -16,6 +17,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/bookings" component={Bookings} />
       <Route path="/profile" component={Profile} />
+      <Route path="/admin" component={Admin} />
       <Route component={NotFound} />
     </Switch>
   );

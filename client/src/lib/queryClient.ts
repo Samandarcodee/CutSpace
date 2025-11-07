@@ -7,6 +7,36 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+// Telegram ID ni olish
+function getTelegramId(): string | null {
+  if (typeof window === "undefined") return null;
+  
+  // Telegram Web App dan
+  const tg = (window as any).Telegram?.WebApp;
+  if (tg?.initDataUnsafe?.user?.id) {
+    return tg.initDataUnsafe.user.id.toString();
+  }
+  
+  // Development mode - admin ID
+  return "5928372261";
+}
+
+// Headers yaratish
+function getHeaders(includeContentType = false): HeadersInit {
+  const headers: HeadersInit = {};
+  
+  if (includeContentType) {
+    headers["Content-Type"] = "application/json";
+  }
+  
+  const telegramId = getTelegramId();
+  if (telegramId) {
+    headers["x-telegram-id"] = telegramId;
+  }
+  
+  return headers;
+}
+
 export async function apiRequest(
   method: string,
   url: string,
@@ -14,7 +44,7 @@ export async function apiRequest(
 ): Promise<Response> {
   const res = await fetch(url, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers: getHeaders(!!data),
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
@@ -30,6 +60,7 @@ export const getQueryFn: <T>(options: {
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     const res = await fetch(queryKey.join("/") as string, {
+      headers: getHeaders(),
       credentials: "include",
     });
 

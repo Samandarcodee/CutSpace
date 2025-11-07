@@ -26,13 +26,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Telegram ID required" });
       }
 
+      // Telegram ID ni BigInt ga o'zgartirish
+      const telegramIdBigInt = BigInt(telegramId);
+      
       // User borligini tekshirish
-      let user = await storage.getUser(BigInt(telegramId));
+      let user = await storage.getUser(telegramIdBigInt);
       
       // Agar yo'q bo'lsa, yangi user yaratish
       if (!user) {
         // Admin ID ni tekshirish
-        const isAdmin = telegramId === "5928372261" || telegramId === 5928372261;
+        const isAdmin = telegramId === "5928372261" || telegramId === 5928372261 || telegramIdBigInt === BigInt("5928372261");
         user = await storage.createUser({
           telegramId: BigInt(telegramId),
           firstName,
