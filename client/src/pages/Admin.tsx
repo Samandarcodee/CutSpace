@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Trash2, Edit, Plus, Shield } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Trash2, Edit, Plus, Shield, MapPin } from "lucide-react";
 import type { Barbershop } from "@shared/schema";
 
 export default function Admin() {
@@ -24,20 +25,22 @@ export default function Admin() {
     images: "",
   });
 
+  const { data: barbershops = [], isLoading } = useQuery<Barbershop[]>({
+    queryKey: ["/api/barbershops"],
+  });
+
   // Admin tekshirish
   if (!isAdmin) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="p-6">
-          <p className="text-center text-muted-foreground">Admin paneliga kirish huquqi yo'q</p>
+      <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 flex items-center justify-center p-4">
+        <Card className="p-8 max-w-md text-center">
+          <Shield className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+          <h2 className="text-xl font-bold mb-2">Kirish taqiqlangan</h2>
+          <p className="text-muted-foreground">Admin paneliga kirish huquqi yo'q</p>
         </Card>
       </div>
     );
   }
-
-  const { data: barbershops = [], isLoading } = useQuery<Barbershop[]>({
-    queryKey: ["/api/barbershops"],
-  });
 
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -136,7 +139,10 @@ export default function Admin() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">Yuklanmoqda...</p>
+        <div className="text-center space-y-3">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-muted-foreground">Yuklanmoqda...</p>
+        </div>
       </div>
     );
   }
@@ -157,45 +163,67 @@ export default function Admin() {
           </div>
         </header>
 
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {barbershops.map((shop) => (
-            <Card key={shop.id} className="p-4">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h3 className="font-bold text-lg">{shop.name}</h3>
-                  <p className="text-sm text-muted-foreground mt-1">{shop.address}</p>
-                  {shop.phone && (
-                    <p className="text-sm text-muted-foreground">📞 {shop.phone}</p>
-                  )}
-                  <p className="text-sm mt-2">⭐ {shop.rating.toFixed(1)}</p>
-                  <div className="mt-2">
-                    <p className="text-xs text-muted-foreground">Xizmatlar:</p>
-                    <ul className="text-sm">
-                      {shop.services.slice(0, 3).map((service, idx) => (
-                        <li key={idx}>• {service}</li>
-                      ))}
-                    </ul>
+            <Card key={shop.id} className="overflow-hidden hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-card to-card/50">
+              <div className="p-5 space-y-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h3 className="font-bold text-lg mb-1">{shop.name}</h3>
+                    <div className="flex items-center gap-1 text-sm mb-2">
+                      <span className="text-yellow-500">⭐</span>
+                      <span className="font-semibold">{shop.rating.toFixed(1)}</span>
+                      <span className="text-muted-foreground text-xs">({shop.reviewCount})</span>
+                    </div>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 hover:bg-primary/10 hover:text-primary"
+                      onClick={() => handleEdit(shop)}
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"
+                      onClick={() => {
+                        if (confirm(`"${shop.name}" ni o'chirishni xohlaysizmi?`)) {
+                          deleteMutation.mutate(shop.id);
+                        }
+                      }}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEdit(shop)}
-                  >
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      if (confirm(`"${shop.name}" ni o'chirishni xohlaysizmi?`)) {
-                        deleteMutation.mutate(shop.id);
-                      }
-                    }}
-                  >
-                    <Trash2 className="w-4 h-4 text-destructive" />
-                  </Button>
+                
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-start gap-2 text-muted-foreground">
+                    <MapPin className="w-4 h-4 shrink-0 mt-0.5" />
+                    <span className="line-clamp-2">{shop.address}</span>
+                  </div>
+                  {shop.phone && (
+                    <div className="text-muted-foreground">📞 {shop.phone}</div>
+                  )}
+                </div>
+
+                <div className="pt-2 border-t">
+                  <p className="text-xs text-muted-foreground mb-2">Xizmatlar:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {shop.services.slice(0, 2).map((service, idx) => (
+                      <Badge key={idx} variant="secondary" className="text-xs">
+                        {service.split(' - ')[0]}
+                      </Badge>
+                    ))}
+                    {shop.services.length > 2 && (
+                      <Badge variant="outline" className="text-xs">
+                        +{shop.services.length - 2}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </div>
             </Card>

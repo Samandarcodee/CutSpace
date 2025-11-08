@@ -26,48 +26,63 @@ export default function BarbershopCard({
   onViewDetails,
 }: BarbershopCardProps) {
   return (
-    <Card className="overflow-hidden" data-testid={`barbershop-card-${id}`}>
-      <div className="grid grid-cols-2 gap-2 p-2">
-        {images.slice(0, 2).map((img, idx) => (
-          <div key={idx} className="aspect-[4/3] rounded-md overflow-hidden bg-muted">
-            <img
-              src={img}
-              alt={`${name} ${idx + 1}`}
-              className="w-full h-full object-cover"
-            />
-          </div>
-        ))}
+    <Card 
+      className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group" 
+      data-testid={`barbershop-card-${id}`}
+      onClick={() => onViewDetails(id)}
+    >
+      <div className="relative">
+        <div className="grid grid-cols-2 gap-1">
+          {images.slice(0, 2).map((img, idx) => (
+            <div key={idx} className="aspect-[4/3] overflow-hidden bg-muted">
+              <img
+                src={img}
+                alt={`${name} ${idx + 1}`}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+            </div>
+          ))}
+        </div>
+        <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm text-white px-2 py-1 rounded-full flex items-center gap-1 text-sm font-semibold">
+          ⭐ {rating.toFixed(1)}
+        </div>
       </div>
       
       <div className="p-4 space-y-3">
         <div>
-          <h3 className="text-lg font-bold mb-1">{name}</h3>
-          <div className="flex items-center gap-2 mb-2">
+          <h3 className="text-lg font-bold mb-2 group-hover:text-primary transition-colors">{name}</h3>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
             <RatingStars rating={rating} size="sm" />
-            <span className="text-sm text-muted-foreground">
-              {rating.toFixed(1)} ({reviewCount} sharh)
-            </span>
+            <span>({reviewCount} sharh)</span>
           </div>
-          <div className="flex items-start gap-1.5 text-sm text-muted-foreground">
+          <div className="flex items-start gap-2 text-sm text-muted-foreground">
             <MapPin className="w-4 h-4 shrink-0 mt-0.5" />
-            <span className="line-clamp-1">{address}</span>
+            <span className="line-clamp-2">{address}</span>
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          {services.slice(0, 3).map((service, idx) => (
-            <Badge key={idx} variant="secondary" className="text-xs">
-              {service}
+        <div className="flex flex-wrap gap-1.5">
+          {services.slice(0, 2).map((service, idx) => (
+            <Badge key={idx} variant="secondary" className="text-xs font-normal">
+              {service.split(' - ')[0]}
             </Badge>
           ))}
+          {services.length > 2 && (
+            <Badge variant="outline" className="text-xs">
+              +{services.length - 2}
+            </Badge>
+          )}
         </div>
 
         <Button
-          className="w-full"
-          onClick={() => onViewDetails(id)}
+          className="w-full group-hover:bg-primary/90"
+          onClick={(e) => {
+            e.stopPropagation();
+            onViewDetails(id);
+          }}
           data-testid={`button-view-${id}`}
         >
-          Ko'proq ko'rish
+          Batafsil ma'lumot
         </Button>
       </div>
     </Card>

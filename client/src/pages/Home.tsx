@@ -153,30 +153,43 @@ export default function Home() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">Yuklanmoqda...</p>
+        <div className="text-center space-y-3">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-muted-foreground">Yuklanmoqda...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 pb-20">
       <div className="max-w-md mx-auto">
-        <header className="bg-card border-b border-card-border p-4 sticky top-0 z-40">
-          <h1 className="text-xl font-bold">Sartaroshxonalar</h1>
-          <p className="text-sm text-muted-foreground">Toshkent shahri</p>
+        <header className="bg-gradient-to-r from-primary/10 to-primary/5 backdrop-blur-sm border-b border-card-border p-6 sticky top-0 z-40 shadow-sm">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            Toshkent Sartarosh
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            💈 {barbershops.length} ta eng yaxshi sartaroshxona
+          </p>
         </header>
 
         <div className="p-4 space-y-4">
-          {barbershops.map((shop) => (
-            <BarbershopCard
-              key={shop.id}
-              {...shop}
-              images={shop.images.map(img => imageMap[img] || img)}
-              onViewDetails={(id) => {
-                setSelectedShopId(id);
-              }}
-            />
-          ))}
+          {barbershops.length === 0 ? (
+            <Card className="p-8 text-center">
+              <p className="text-muted-foreground">Hozircha sartaroshxona yo'q</p>
+            </Card>
+          ) : (
+            barbershops.map((shop) => (
+              <BarbershopCard
+                key={shop.id}
+                {...shop}
+                images={shop.images.map(img => imageMap[img] || img)}
+                onViewDetails={(id) => {
+                  setSelectedShopId(id);
+                }}
+              />
+            ))
+          )}
         </div>
       </div>
 

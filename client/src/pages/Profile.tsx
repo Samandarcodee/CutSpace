@@ -41,29 +41,37 @@ export default function Profile() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 pb-20">
       <div className="max-w-md mx-auto">
-        <header className="bg-card border-b border-card-border p-4">
-          <h1 className="text-xl font-bold">Profil</h1>
+        <header className="bg-gradient-to-r from-primary/10 to-primary/5 backdrop-blur-sm border-b border-card-border p-6">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            Profil
+          </h1>
         </header>
 
         <div className="p-4 space-y-4">
-          <Card className="p-6">
+          <Card className="p-6 bg-gradient-to-br from-card to-card/50 backdrop-blur">
             <div className="flex flex-col items-center text-center space-y-4">
-              <Avatar className="w-20 h-20">
-                <AvatarFallback className="bg-primary/10 text-primary text-2xl">
-                  {user.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+              <div className="relative">
+                <Avatar className="w-24 h-24 border-4 border-primary/20">
+                  <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary text-3xl font-bold">
+                    {user.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                {isAdmin && (
+                  <div className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground rounded-full p-1.5">
+                    <Shield className="w-4 h-4" />
+                  </div>
+                )}
+              </div>
               <div>
-                <h2 className="text-xl font-bold">{user.name}</h2>
+                <h2 className="text-2xl font-bold">{user.name}</h2>
                 {user.username && (
                   <p className="text-sm text-muted-foreground">@{user.username}</p>
                 )}
-                <p className="text-sm text-muted-foreground mt-1 flex items-center justify-center gap-1">
-                  {isAdmin && <Shield className="w-3 h-3" />}
-                  {user.role === "admin" ? "Admin" : user.role === "barber" ? "Sartarosh" : "Mijoz"}
-                </p>
+                <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
+                  {user.role === "admin" ? "👑 Admin" : user.role === "barber" ? "✂️ Sartarosh" : "👤 Mijoz"}
+                </div>
               </div>
             </div>
 
@@ -83,29 +91,40 @@ export default function Profile() {
             </div>
           </Card>
 
-          <Card className="p-6">
-            <h3 className="font-bold mb-4">Statistika</h3>
+          <Card className="p-6 bg-gradient-to-br from-card to-card/50">
+            <h3 className="font-bold mb-4 text-lg">📊 Statistika</h3>
             <div className="grid grid-cols-3 gap-4">
               {stats.map((stat, idx) => (
-                <div key={idx} className="text-center">
-                  <p className="text-2xl font-bold text-primary">{stat.value}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>
+                <div key={idx} className="text-center space-y-1">
+                  <div className="text-3xl font-bold bg-gradient-to-br from-primary to-primary/70 bg-clip-text text-transparent">
+                    {stat.value}
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-tight">{stat.label}</p>
                 </div>
               ))}
             </div>
           </Card>
 
-          <Card className="p-4">
+          <Card className="p-4 bg-gradient-to-br from-card to-card/50">
             <div className="space-y-2">
               {isAdmin && (
                 <Link href="/admin">
-                  <Button variant="outline" className="w-full justify-start" data-testid="button-admin">
+                  <Button 
+                    variant="default" 
+                    className="w-full justify-start bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all"
+                    data-testid="button-admin"
+                  >
                     <Shield className="w-4 h-4 mr-2" />
                     Admin Panel
                   </Button>
                 </Link>
               )}
-              <Button variant="outline" className="w-full justify-start" data-testid="button-edit-profile" onClick={refreshUser}>
+              <Button 
+                variant="outline" 
+                className="w-full justify-start hover:bg-primary/5 transition-colors" 
+                data-testid="button-edit-profile" 
+                onClick={refreshUser}
+              >
                 <User className="w-4 h-4 mr-2" />
                 Ma'lumotlarni yangilash
               </Button>
