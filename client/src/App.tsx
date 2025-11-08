@@ -9,6 +9,7 @@ import Home from "@/pages/Home";
 import Bookings from "@/pages/Bookings";
 import Profile from "@/pages/Profile";
 import Admin from "@/pages/Admin";
+import TelegramDebug from "@/pages/TelegramDebug";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -18,6 +19,7 @@ function Router() {
       <Route path="/bookings" component={Bookings} />
       <Route path="/profile" component={Profile} />
       <Route path="/admin" component={Admin} />
+      <Route path="/debug" component={TelegramDebug} />
       <Route component={NotFound} />
     </Switch>
   );
