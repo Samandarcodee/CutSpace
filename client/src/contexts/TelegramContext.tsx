@@ -106,9 +106,15 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
           if (data.user) {
             setBackendUser(data.user);
             console.log("✅ Backend user loaded:", data.user);
+            console.log("✅ User role:", data.user.role);
+            console.log("✅ Is admin:", data.user.role === "admin");
+          } else {
+            console.error("❌ No user in response:", data);
           }
         })
-        .catch(console.error);
+        .catch(error => {
+          console.error("❌ Failed to load backend user:", error);
+        });
       } else {
         // Development mode - test user (CUSTOMER, not admin)
         console.log("Development mode: using test user");
@@ -138,9 +144,15 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
           if (data.user) {
             setBackendUser(data.user);
             console.log("✅ Backend user loaded:", data.user);
+            console.log("✅ User role:", data.user.role);
+            console.log("✅ Is admin:", data.user.role === "admin");
+          } else {
+            console.error("❌ No user in response:", data);
           }
         })
-        .catch(console.error);
+        .catch(error => {
+          console.error("❌ Failed to load backend user:", error);
+        });
       }
       
       setIsReady(true);

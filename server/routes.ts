@@ -32,26 +32,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // User borligini tekshirish
       let user = await storage.getUser(telegramIdBigInt);
       
+      // Admin ID ni tekshirish (barcha formatlarni qo'llab-quvvatlash)
+      const adminId = "5928372261";
+      const isAdmin = String(telegramId) === adminId || 
+                     Number(telegramId) === Number(adminId) || 
+                     telegramIdBigInt === BigInt(adminId);
+      
+      console.log(`[AUTH] Telegram ID: ${telegramId}, Admin check: ${isAdmin}`);
+      
       // Agar yo'q bo'lsa, yangi user yaratish
       if (!user) {
-        // Admin ID ni tekshirish
-        const isAdmin = telegramId === "5928372261" || telegramId === 5928372261 || telegramIdBigInt === BigInt("5928372261");
+        const role = isAdmin ? "admin" : "customer";
+        console.log(`[AUTH] Creating new user with role: ${role}`);
         user = await storage.createUser({
           telegramId: BigInt(telegramId),
           firstName,
           lastName,
           username,
-          role: isAdmin ? "admin" : "customer",
+          role,
           barbershopId: null,
         });
       } else {
         // Agar user bor bo'lsa va admin ID bo'lsa, admin qilish
-        const isAdmin = telegramId === "5928372261" || telegramId === 5928372261;
         if (isAdmin && user.role !== "admin") {
-          user = await storage.updateUserRole(user.id, "admin");
+          console.log(`[AUTH] Updating user ${user.id} to admin role`);
+          const updatedUser = await storage.updateUserRole(user.id, "admin");
+          if (updatedUser) {
+            user = updatedUser;
+          }
         }
+        console.log(`[AUTH] User found with role: ${user.role}`);
       }
 
+      console.log(`[AUTH] Returning user with role: ${user.role}`);
       res.json({ user: serializeUser(user) });
     } catch (error) {
       console.error("Auth error:", error);
