@@ -7,17 +7,15 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+import { getTelegramWebAppUser } from "./telegram";
+
 // Telegram ID ni olish
 function getTelegramId(): string | null {
   if (typeof window === "undefined") return null;
-  
-  // Faqat Telegram Web App dan olish
-  const tg = (window as any).Telegram?.WebApp;
-  if (tg?.initDataUnsafe?.user?.id) {
-    return tg.initDataUnsafe.user.id.toString();
-  }
-  
-  // Agar Telegram Web App bo'lmasa - null qaytarish
+
+  const user = getTelegramWebAppUser();
+  if (user?.id) return user.id.toString();
+
   return null;
 }
 

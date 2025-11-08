@@ -1,12 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-
-interface TelegramUser {
-  id: number;
-  first_name: string;
-  last_name?: string;
-  username?: string;
-  language_code?: string;
-}
+import { getTelegramWebApp, getTelegramWebAppUser, TelegramWebAppUser } from "@/lib/telegram";
 
 interface BackendUser {
   id: string;
@@ -37,7 +30,7 @@ const TelegramContext = createContext<TelegramContextType>({
 });
 
 export function TelegramProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<TelegramUser | null>(null);
+  const [user, setUser] = useState<TelegramWebAppUser | null>(null);
   const [backendUser, setBackendUser] = useState<BackendUser | null>(null);
   const [webApp, setWebApp] = useState<any>(null);
   const [isReady, setIsReady] = useState(false);
@@ -72,8 +65,8 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    const tg = (window as any).Telegram?.WebApp;
-    
+    const tg = getTelegramWebApp();
+
     if (tg) {
       tg.ready();
       tg.expand();
@@ -83,13 +76,12 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
       
       setWebApp(tg);
       
-      // User ma'lumotlarini olish
-      if (tg.initDataUnsafe?.user) {
-        const tgUser = tg.initDataUnsafe.user;
+      const tgUser = getTelegramWebAppUser();
+
+      if (tgUser) {
         setUser(tgUser);
-        
-        // Backend ga auth request yuborish
-        fetch('/api/auth/telegram', {
+
+        fetch("/api/auth/telegram", {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -111,8 +103,8 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
         })
         .catch(console.error);
       } else {
-        // Telegram Web App ichida emas - xato ko'rsatish
-        console.warn("⚠️ Bu ilovani faqat Telegram Mini App orqali ochish mumkin!");
+        console.warn("⚠️ Telegram foydalanuvchi ma'lumoti topilmadi. Iltimos, bot chatidan Mini App ni ishga tushiring.");
+        tg.showAlert?.("Mini App foydalanuvchi ma'lumotlarini ololmadi. Iltimos, bot chatidagi \"Mini App\" tugmasidan foydalaning.");
       }
       
       setIsReady(true);
@@ -120,6 +112,9 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
       // Telegram SDK mavjud emas - xato
       console.error("❌ Telegram WebApp SDK topilmadi!");
       console.error("❌ Bu ilovani faqat Telegram Mini App orqali ishlating!");
+      if (typeof window !== "undefined") {
+        alert("Iltimos, ilovani faqat Telegram ichida ishlating.");
+      }
       setIsReady(true);
     }
   }, []);
