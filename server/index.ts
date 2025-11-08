@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeTelegramBot } from "./telegram";
+import { getAdminIdList } from "./admin-config";
 
 const app = express();
 
@@ -124,16 +125,35 @@ app.use((req, res, next) => {
         console.log("ℹ️ Columns already exist or error:", (e as any)?.message);
       }
       
-      // Seed - admin user va demo data
-      const adminCheck = await sql`SELECT * FROM users WHERE telegram_id = 5928372261 LIMIT 1`;
-      if (adminCheck.length === 0) {
-        await sql`
-          INSERT INTO users (telegram_id, first_name, last_name, username, role)
-          VALUES (5928372261, 'Admin', 'User', 'admin', 'admin')
-          ON CONFLICT (telegram_id) DO NOTHING
-        `;
-        console.log("✅ Admin user created (ID: 5928372261)");
-      }
+        // Seed - admin user va demo data
+        const adminIds = getAdminIdList();
+        for (const adminId of adminIds) {
+          try {
+            const adminIdBigInt = BigInt(adminId);
+            const adminCheck =
+              await sql`SELECT 1 FROM users WHERE telegram_id = ${adminIdBigInt} LIMIT 1`;
+            if (adminCheck.length === 0) {
+              await sql`
+                INSERT INTO users (telegram_id, first_name, last_name, username, role)
+                VALUES (${adminIdBigInt}, 'Admin', 'User', 'admin', 'admin')
+                ON CONFLICT (telegram_id) DO NOTHING
+              `;
+              console.log(`✅ Admin user created (ID: ${adminId})`);
+            } else {
+              await sql`
+                UPDATE users
+                SET role = 'admin'
+                WHERE telegram_id = ${adminIdBigInt}
+              `;
+              console.log(`ℹ️ Admin user ensured (ID: ${adminId})`);
+            }
+          } catch (error: any) {
+            console.warn(
+              `⚠️ Failed to upsert admin user for telegram id ${adminId}:`,
+              error?.message ?? error,
+            );
+          }
+        }
       
       // Demo barbershops (agar yo'q bo'lsa)
       const shopsCheck = await sql`SELECT COUNT(*) as count FROM barbershops`;

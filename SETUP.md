@@ -39,6 +39,9 @@ DATABASE_URL=postgresql://your_username:your_password@your_host/your_database
 TELEGRAM_BOT_TOKEN=8555285589:AAEEaVbjFtXCRa54_VSxLIhTx6Pqy5f9bZc
 TELEGRAM_CHAT_ID=your_telegram_chat_id
 
+# Admin foydalanuvchilar (vergul bilan ajratilgan Telegram ID lar)
+ADMIN_TELEGRAM_IDS=5928372261
+
 # Server
 PORT=5000
 NODE_ENV=development
@@ -111,6 +114,8 @@ npx drizzle-kit studio
 - Bookings sahifasiga o'ting: `http://localhost:5000`
 - "Bookings" tab ni oching
 - Bu yerda barcha yozilishlarni ko'rishingiz va boshqarishingiz mumkin
+
+> Agar o'zingizni admin ro'yxatiga qo'shmoqchi bo'lsangiz, `ADMIN_TELEGRAM_IDS` environment o'zgaruvchisiga o'z Telegram ID'ingizni qo'shing (vergul bilan ajratilgan holda) va serverni qayta ishga tushiring.
 
 ### Telegram xabarnomalar:
 - Telegram botingizdan chat ID ni oling: `/getUpdates` API orqali

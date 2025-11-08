@@ -2,6 +2,7 @@ import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { eq } from "drizzle-orm";
 import { barbershops, reviews, users } from "@shared/schema";
+import { getAdminIdBigIntList } from "./admin-config";
 
 // Seed database with initial data
 async function seed() {
@@ -17,25 +18,36 @@ async function seed() {
 
   console.log("🌱 Seeding database...");
 
-  // Create admin user
-  const adminTelegramId = BigInt("5928372261");
-  const existingAdmin = await db.select().from(users).where(eq(users.telegramId, adminTelegramId)).limit(1);
-  
-  if (existingAdmin.length === 0) {
-    await db.insert(users).values({
-      telegramId: adminTelegramId,
-      firstName: "Admin",
-      lastName: "User",
-      username: "admin",
-      role: "admin",
-    });
-    console.log("✅ Created admin user (ID: 5928372261)");
+  // Create admin user(s)
+  const adminTelegramIds = getAdminIdBigIntList();
+  if (adminTelegramIds.length === 0) {
+    console.warn("⚠️ No admin Telegram IDs configured. Skipping admin seeding.");
   } else {
-    // Update existing user to admin
-    await db.update(users)
-      .set({ role: "admin" })
-      .where(eq(users.telegramId, adminTelegramId));
-    console.log("✅ Updated user to admin (ID: 5928372261)");
+    for (const adminTelegramId of adminTelegramIds) {
+      const existingAdmin = await db
+        .select()
+        .from(users)
+        .where(eq(users.telegramId, adminTelegramId))
+        .limit(1);
+
+      if (existingAdmin.length === 0) {
+        await db.insert(users).values({
+          telegramId: adminTelegramId,
+          firstName: "Admin",
+          lastName: "User",
+          username: "admin",
+          role: "admin",
+        });
+        console.log(`✅ Created admin user (ID: ${adminTelegramId.toString()})`);
+      } else {
+        // Update existing user to admin
+        await db
+          .update(users)
+          .set({ role: "admin" })
+          .where(eq(users.telegramId, adminTelegramId));
+        console.log(`✅ Updated user to admin (ID: ${adminTelegramId.toString()})`);
+      }
+    }
   }
 
   // Insert barbershops

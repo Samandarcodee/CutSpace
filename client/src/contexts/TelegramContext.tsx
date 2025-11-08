@@ -181,7 +181,7 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const isAdmin = backendUser?.role === "admin";
+  const isAdmin = backendUser?.role?.toLowerCase?.().trim() === "admin";
 
   return (
     <TelegramContext.Provider value={{ 

@@ -16,6 +16,7 @@ import { randomUUID } from "crypto";
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { eq, desc } from "drizzle-orm";
+import { getAdminIdBigIntList } from "./admin-config";
 
 export interface IStorage {
   // Users
@@ -58,18 +59,31 @@ export class MemStorage implements IStorage {
   }
 
   private seedData() {
-    // Admin user
-    const adminUser: User = {
-      id: "admin-1",
-      telegramId: BigInt("5928372261"),
-      firstName: "Admin",
-      lastName: "User",
-      username: "admin",
-      role: "admin",
-      barbershopId: null,
-      createdAt: new Date(),
-    };
-    this.users.set("admin-1", adminUser);
+    // Admin users
+    const adminTelegramIds = getAdminIdBigIntList();
+    const adminUsers: User[] = adminTelegramIds.map((telegramId, index) => {
+      const id = `admin-${index + 1}`;
+      const user: User = {
+        id,
+        telegramId,
+        firstName: "Admin",
+        lastName: "User",
+        username: `admin${index === 0 ? "" : index + 1}`,
+        role: "admin",
+        barbershopId: null,
+        createdAt: new Date(),
+      };
+      this.users.set(id, user);
+      return user;
+    });
+
+    if (adminUsers.length === 0) {
+      console.warn(
+        "[storage] No admin Telegram IDs configured – admin panel will be inaccessible until an admin is created.",
+      );
+    }
+
+    const primaryAdminUser = adminUsers[0];
     
     // Demo barbershops
     const shop1: Barbershop = {
@@ -81,7 +95,7 @@ export class MemStorage implements IStorage {
       services: ["Soch olish - 50,000 so'm", "Soqol qirish - 30,000 so'm", "Styling - 40,000 so'm"],
       images: ["/images/luxury.png", "/images/barber-work.png"],
       reviewCount: 3,
-      ownerId: "admin-1",
+      ownerId: primaryAdminUser?.id ?? null,
       createdAt: new Date(),
     };
 

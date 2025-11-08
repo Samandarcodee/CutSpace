@@ -1,10 +1,11 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertBookingSchema, insertReviewSchema, insertBarbershopSchema, insertUserSchema } from "@shared/schema";
+import { insertBookingSchema, insertReviewSchema, insertBarbershopSchema } from "@shared/schema";
 import { sendTelegramNotification } from "./telegram.js";
-import { authenticateUser, requireAdmin, requireBarber, parseTelegramWebAppData } from "./auth";
+import { authenticateUser, requireAdmin, requireBarber } from "./auth";
 import type { User } from "@shared/schema";
+import { isAdminTelegramId } from "./admin-config";
 
 // Helper function: BigInt ni string ga o'zgartirish
 function serializeUser(user: User) {
@@ -16,39 +17,43 @@ function serializeUser(user: User) {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // ==================== AUTH ROUTES ====================
-  
+
   // Telegram orqali kirish / ro'yxatdan o'tish
   app.post("/api/auth/telegram", async (req, res) => {
     try {
       const { telegramId, firstName, lastName, username } = req.body;
-      
-      if (!telegramId) {
+
+      if (telegramId === undefined || telegramId === null || telegramId === "") {
         return res.status(400).json({ error: "Telegram ID required" });
       }
 
-      // Telegram ID ni BigInt ga o'zgartirish
-      const telegramIdBigInt = BigInt(telegramId);
-      
+      let telegramIdBigInt: bigint;
+      try {
+        telegramIdBigInt = BigInt(telegramId);
+      } catch (_error) {
+        return res.status(400).json({ error: "Invalid Telegram ID" });
+      }
+
       // User borligini tekshirish
       let user = await storage.getUser(telegramIdBigInt);
-      
+
+      const adminDetected =
+        isAdminTelegramId(telegramId) || isAdminTelegramId(telegramIdBigInt);
+
       // Agar yo'q bo'lsa, yangi user yaratish
       if (!user) {
-        // Admin ID ni tekshirish
-        const isAdmin = telegramId === "5928372261" || telegramId === 5928372261 || telegramIdBigInt === BigInt("5928372261");
         user = await storage.createUser({
-          telegramId: BigInt(telegramId),
+          telegramId: telegramIdBigInt,
           firstName,
           lastName,
           username,
-          role: isAdmin ? "admin" : "customer",
+          role: adminDetected ? "admin" : "customer",
           barbershopId: null,
         });
-      } else {
-        // Agar user bor bo'lsa va admin ID bo'lsa, admin qilish
-        const isAdmin = telegramId === "5928372261" || telegramId === 5928372261;
-        if (isAdmin && user.role !== "admin") {
-          user = await storage.updateUserRole(user.id, "admin");
+      } else if (adminDetected && user.role !== "admin") {
+        const updatedUser = await storage.updateUserRole(user.id, "admin");
+        if (updatedUser) {
+          user = updatedUser;
         }
       }
 
