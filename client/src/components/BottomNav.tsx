@@ -5,14 +5,14 @@ export default function BottomNav() {
   const [location] = useLocation();
 
   const navItems = [
-    { path: "/", icon: Home, label: "Bosh sahifa" },
-    { path: "/bookings", icon: Calendar, label: "Yozilish" },
-    { path: "/profile", icon: User, label: "Profil" },
+    { path: "/", icon: Home, label: "Asosiy", emoji: "🏠" },
+    { path: "/bookings", icon: Calendar, label: "Yozilish", emoji: "📅" },
+    { path: "/profile", icon: User, label: "Profil", emoji: "👤" },
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-card-border z-50">
-      <div className="max-w-md mx-auto flex justify-around items-center h-16 px-4">
+    <nav className="fixed bottom-0 left-0 right-0 bg-card/80 backdrop-blur-lg border-t border-card-border z-50 shadow-lg">
+      <div className="max-w-md mx-auto flex justify-around items-center h-16 px-2">
         {navItems.map((item) => {
           const isActive = location === item.path;
           const Icon = item.icon;
@@ -24,12 +24,17 @@ export default function BottomNav() {
               data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
             >
               <button
-                className={`flex flex-col items-center justify-center min-w-[60px] gap-1 transition-colors ${
-                  isActive ? "text-primary" : "text-muted-foreground"
+                className={`relative flex flex-col items-center justify-center min-w-[70px] gap-1 py-2 px-3 rounded-xl transition-all ${
+                  isActive 
+                    ? "text-primary bg-primary/10" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 }`}
               >
-                <Icon className="w-5 h-5" />
-                <span className="text-xs font-medium">{item.label}</span>
+                {isActive && (
+                  <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-8 h-1 bg-primary rounded-full" />
+                )}
+                <Icon className={`w-5 h-5 transition-transform ${isActive ? 'scale-110' : ''}`} />
+                <span className="text-[10px] font-medium">{item.label}</span>
               </button>
             </Link>
           );
