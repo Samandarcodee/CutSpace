@@ -29,6 +29,11 @@ export default function Admin() {
     queryKey: ["/api/barbershops"],
   });
 
+  // Debug logging
+  console.log("🔍 Admin page - isAdmin:", isAdmin);
+  console.log("🔍 Admin page - backendUser:", backendUser);
+  console.log("🔍 Admin page - backendUser?.role:", backendUser?.role);
+
   // Admin tekshirish
   if (!isAdmin) {
     return (
