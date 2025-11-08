@@ -407,16 +407,20 @@ export class DbStorage implements IStorage {
 function initializeStorage(): IStorage {
   const databaseUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.RENDER_DATABASE_URL;
   
-  if (databaseUrl) {
+  if (databaseUrl && databaseUrl.includes("postgresql://")) {
     try {
       console.log("📦 Attempting to connect to database...");
-      console.log(`📦 Database URL: ${databaseUrl.substring(0, 20)}...`);
+      console.log(`📦 Database URL: ${databaseUrl.substring(0, 30)}...`);
+      
+      // Test connection with timeout
       const dbStorage = new DbStorage();
+      
       console.log("✅ Connected to PostgreSQL database!");
       return dbStorage;
     } catch (error: any) {
-      console.warn("⚠️ Database connection failed, using in-memory storage");
-      console.warn("Error:", error?.message || error);
+      console.error("⚠️ Database connection FAILED!");
+      console.error("Error:", error?.message || error);
+      console.error("⚠️ Falling back to IN-MEMORY storage");
       return new MemStorage();
     }
   }
