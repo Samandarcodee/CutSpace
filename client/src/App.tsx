@@ -30,10 +30,10 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TelegramProvider>
         <TooltipProvider>
-      <div className="min-h-screen bg-background">
-        <Router />
-        <BottomNav />
-      </div>
+          <div className="min-h-screen bg-background">
+            <Router />
+            <BottomNav />
+          </div>
           <Toaster />
         </TooltipProvider>
       </TelegramProvider>

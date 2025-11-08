@@ -135,12 +135,10 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
           })
           .catch(error => {
             console.error("❌ Backend auth error:", error);
-            // User'ga xabar berish
-            tg.showPopup?.({
-              title: "Xatolik",
-              message: "Backend bilan bog'lanishda xatolik. Iltimos, qayta urinib ko'ring.",
-              buttons: [{ type: "close" }]
-            });
+            // User'ga xabar berish (showAlert eski versiyalar bilan compatible)
+            if (tg.showAlert) {
+              tg.showAlert("Backend bilan bog'lanishda xatolik. Iltimos, qayta urinib ko'ring.");
+            }
           });
         } else {
           console.error("❌ Telegram user ma'lumoti topilmadi");
@@ -149,12 +147,10 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
             initData: tg.initData?.substring(0, 50),
           });
           
-          // User'ga tushunarli xabar
-          tg.showPopup?.({
-            title: "Xatolik",
-            message: "Mini App foydalanuvchi ma'lumotlarini ololmadi. Iltimos, bot chatidagi \"Mini App\" tugmasidan foydalaning.",
-            buttons: [{ type: "close" }]
-          });
+          // User'ga tushunarli xabar (showAlert eski versiyalar bilan compatible)
+          if (tg.showAlert) {
+            tg.showAlert("Mini App foydalanuvchi ma'lumotlarini ololmadi. Iltimos, bot chatidagi \"Mini App\" tugmasidan foydalaning.");
+          }
         }
         
         setIsReady(true);
