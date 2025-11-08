@@ -110,13 +110,13 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
         })
         .catch(console.error);
       } else {
-        // Development mode - test user (admin ID)
+        // Development mode - test user (CUSTOMER, not admin)
         console.log("Development mode: using test user");
         const testUser = {
-          id: 5928372261, // Admin ID
-          first_name: "Admin",
+          id: 123456789, // Test customer ID
+          first_name: "Test",
           last_name: "User",
-          username: "admin",
+          username: "testuser",
         };
         setUser(testUser);
         
@@ -148,10 +148,10 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
       // Telegram SDK mavjud emas (development)
       console.log("Telegram WebApp SDK not found - development mode");
       const testUser = {
-        id: 5928372261, // Admin ID for testing
-        first_name: "Admin",
+        id: 123456789, // Test customer ID
+        first_name: "Test",
         last_name: "User",
-        username: "admin",
+        username: "testuser",
       };
       setUser(testUser);
       

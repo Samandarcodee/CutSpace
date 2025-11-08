@@ -17,8 +17,8 @@ function getTelegramId(): string | null {
     return tg.initDataUnsafe.user.id.toString();
   }
   
-  // Development mode - admin ID
-  return "5928372261";
+  // Development mode - test customer ID (NOT admin)
+  return "123456789";
 }
 
 // Headers yaratish
