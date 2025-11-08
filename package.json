@@ -15,7 +15,9 @@
     "check": "tsc",
     "db:push": "drizzle-kit push",
     "db:migrate": "tsx server/migrations.ts",
-    "db:seed": "tsx server/seed.ts"
+    "db:seed": "tsx server/seed.ts",
+    "db:check": "tsx scripts/check-database.ts",
+    "db:setup": "bash scripts/setup-database.sh"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
