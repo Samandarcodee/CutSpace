@@ -30,9 +30,51 @@ export function getTelegramWebAppUser(): TelegramWebAppUser | null {
 
   const unsafeUser = tg.initDataUnsafe?.user as TelegramWebAppUser | undefined;
   if (unsafeUser?.id) {
+    sessionStorage.setItem("tgUser", JSON.stringify(unsafeUser));
     return unsafeUser;
   }
 
-  return parseTelegramInitData(tg.initData);
+  const parsedFromInit = parseTelegramInitData(tg.initData);
+  if (parsedFromInit?.id) {
+    sessionStorage.setItem("tgUser", JSON.stringify(parsedFromInit));
+    return parsedFromInit;
+  }
+
+  if (typeof window !== "undefined") {
+    const hash = window.location.hash;
+    const searchParams = new URLSearchParams(window.location.search);
+
+    if (hash.includes("tgWebAppData=")) {
+      const data = decodeURIComponent(hash.split("tgWebAppData=")[1]);
+      const parsed = parseTelegramInitData(data);
+      if (parsed?.id) {
+        sessionStorage.setItem("tgUser", JSON.stringify(parsed));
+        return parsed;
+      }
+    }
+
+    if (searchParams.has("tgWebAppData")) {
+      const data = searchParams.get("tgWebAppData") || undefined;
+      const parsed = parseTelegramInitData(data);
+      if (parsed?.id) {
+        sessionStorage.setItem("tgUser", JSON.stringify(parsed));
+        return parsed;
+      }
+    }
+
+    const cached = sessionStorage.getItem("tgUser");
+    if (cached) {
+      try {
+        const user = JSON.parse(cached) as TelegramWebAppUser;
+        if (user?.id) {
+          return user;
+        }
+      } catch {
+        sessionStorage.removeItem("tgUser");
+      }
+    }
+  }
+
+  return null;
 }
 
