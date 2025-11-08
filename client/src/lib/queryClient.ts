@@ -11,14 +11,14 @@ async function throwIfResNotOk(res: Response) {
 function getTelegramId(): string | null {
   if (typeof window === "undefined") return null;
   
-  // Telegram Web App dan
+  // Faqat Telegram Web App dan olish
   const tg = (window as any).Telegram?.WebApp;
   if (tg?.initDataUnsafe?.user?.id) {
     return tg.initDataUnsafe.user.id.toString();
   }
   
-  // Development mode - test customer ID (NOT admin)
-  return "123456789";
+  // Agar Telegram Web App bo'lmasa - null qaytarish
+  return null;
 }
 
 // Headers yaratish

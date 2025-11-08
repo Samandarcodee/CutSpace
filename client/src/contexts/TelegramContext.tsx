@@ -111,74 +111,15 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
         })
         .catch(console.error);
       } else {
-        // Development mode - test user (CUSTOMER, not admin)
-        console.log("Development mode: using test user");
-        const testUser = {
-          id: 123456789, // Test customer ID
-          first_name: "Test",
-          last_name: "User",
-          username: "testuser",
-        };
-        setUser(testUser);
-        
-        // Backend ga auth request
-        fetch('/api/auth/telegram', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            telegramId: testUser.id,
-            firstName: testUser.first_name,
-            lastName: testUser.last_name,
-            username: testUser.username,
-          }),
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data.user) {
-            setBackendUser(data.user);
-            console.log("✅ Backend user loaded:", data.user);
-          }
-        })
-        .catch(console.error);
+        // Telegram Web App ichida emas - xato ko'rsatish
+        console.warn("⚠️ Bu ilovani faqat Telegram Mini App orqali ochish mumkin!");
       }
       
       setIsReady(true);
     } else {
-      // Telegram SDK mavjud emas (development)
-      console.log("Telegram WebApp SDK not found - development mode");
-      const testUser = {
-        id: 123456789, // Test customer ID
-        first_name: "Test",
-        last_name: "User",
-        username: "testuser",
-      };
-      setUser(testUser);
-      
-      // Backend ga auth request
-      fetch('/api/auth/telegram', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          telegramId: testUser.id,
-          firstName: testUser.first_name,
-          lastName: testUser.last_name,
-          username: testUser.username,
-        }),
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data.user) {
-            setBackendUser(data.user);
-            console.log("✅ Backend user loaded:", data.user);
-            console.log("👑 Is Admin:", data.user.role === "admin");
-          }
-        })
-        .catch(console.error);
-      
+      // Telegram SDK mavjud emas - xato
+      console.error("❌ Telegram WebApp SDK topilmadi!");
+      console.error("❌ Bu ilovani faqat Telegram Mini App orqali ishlating!");
       setIsReady(true);
     }
   }, []);
