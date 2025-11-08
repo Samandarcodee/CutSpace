@@ -114,11 +114,12 @@ app.use((req, res, next) => {
       
       console.log("✅ Database tables created/verified");
       
-      // ALTER TABLE - eski jadvalga phone va owner_id qo'shish
+      // ALTER TABLE - eski jadvalga yangi ustunlar qo'shish
       try {
         await sql`ALTER TABLE barbershops ADD COLUMN IF NOT EXISTS phone TEXT`;
         await sql`ALTER TABLE barbershops ADD COLUMN IF NOT EXISTS owner_id VARCHAR REFERENCES users(id)`;
-        console.log("✅ Barbershops table updated with phone and owner_id");
+        await sql`ALTER TABLE barbershops ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`;
+        console.log("✅ Barbershops table updated with phone, owner_id, created_at");
       } catch (e) {
         console.log("ℹ️ Columns already exist or error:", (e as any)?.message);
       }
