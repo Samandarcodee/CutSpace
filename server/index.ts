@@ -114,6 +114,15 @@ app.use((req, res, next) => {
       
       console.log("✅ Database tables created/verified");
       
+      // ALTER TABLE - eski jadvalga phone va owner_id qo'shish
+      try {
+        await sql`ALTER TABLE barbershops ADD COLUMN IF NOT EXISTS phone TEXT`;
+        await sql`ALTER TABLE barbershops ADD COLUMN IF NOT EXISTS owner_id VARCHAR REFERENCES users(id)`;
+        console.log("✅ Barbershops table updated with phone and owner_id");
+      } catch (e) {
+        console.log("ℹ️ Columns already exist or error:", (e as any)?.message);
+      }
+      
       // Seed - admin user va demo data
       const adminCheck = await sql`SELECT * FROM users WHERE telegram_id = 5928372261 LIMIT 1`;
       if (adminCheck.length === 0) {
