@@ -28,14 +28,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Telegram ID ni BigInt ga o'zgartirish
       const telegramIdBigInt = BigInt(telegramId);
+      console.log(`🔐 Auth request - Telegram ID: ${telegramId} (${typeof telegramId})`);
       
       // User borligini tekshirish
       let user = await storage.getUser(telegramIdBigInt);
       
+      // Admin ID ni tekshirish
+      const isAdmin = telegramId === "5928372261" || 
+                      telegramId === 5928372261 || 
+                      telegramIdBigInt === BigInt("5928372261");
+      
+      console.log(`👤 User found: ${!!user}, Is Admin ID: ${isAdmin}`);
+      
       // Agar yo'q bo'lsa, yangi user yaratish
       if (!user) {
-        // Admin ID ni tekshirish
-        const isAdmin = telegramId === "5928372261" || telegramId === 5928372261 || telegramIdBigInt === BigInt("5928372261");
+        console.log(`➕ Creating new user - Role: ${isAdmin ? "admin" : "customer"}`);
         user = await storage.createUser({
           telegramId: BigInt(telegramId),
           firstName,
@@ -44,17 +51,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
           role: isAdmin ? "admin" : "customer",
           barbershopId: null,
         });
+        console.log(`✅ User created - ID: ${user.id}, Role: ${user.role}`);
       } else {
+        console.log(`👤 Existing user - ID: ${user.id}, Current Role: ${user.role}`);
         // Agar user bor bo'lsa va admin ID bo'lsa, admin qilish
-        const isAdmin = telegramId === "5928372261" || telegramId === 5928372261 || telegramIdBigInt === BigInt("5928372261");
         if (isAdmin && user.role !== "admin") {
+          console.log(`🔄 Updating user role to admin`);
           user = await storage.updateUserRole(user.id, "admin");
+          console.log(`✅ User role updated to admin`);
+        } else if (isAdmin) {
+          console.log(`✅ User already has admin role`);
         }
       }
 
+      console.log(`📤 Sending response - User role: ${user.role}`);
       res.json({ user: serializeUser(user) });
     } catch (error) {
-      console.error("Auth error:", error);
+      console.error("❌ Auth error:", error);
       res.status(500).json({ error: "Authentication failed" });
     }
   });

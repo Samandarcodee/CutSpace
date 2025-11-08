@@ -106,6 +106,7 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
           if (data.user) {
             setBackendUser(data.user);
             console.log("✅ Backend user loaded:", data.user);
+            console.log("👑 Is Admin:", data.user.role === "admin");
           }
         })
         .catch(console.error);
@@ -167,21 +168,34 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
           lastName: testUser.last_name,
           username: testUser.username,
         }),
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.user) {
-          setBackendUser(data.user);
-          console.log("✅ Backend user loaded:", data.user);
-        }
-      })
-      .catch(console.error);
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.user) {
+            setBackendUser(data.user);
+            console.log("✅ Backend user loaded:", data.user);
+            console.log("👑 Is Admin:", data.user.role === "admin");
+          }
+        })
+        .catch(console.error);
       
       setIsReady(true);
     }
   }, []);
 
   const isAdmin = backendUser?.role === "admin";
+  
+  // Debug logging
+  useEffect(() => {
+    if (backendUser) {
+      console.log("🔍 TelegramContext State:", {
+        telegramId: user?.id,
+        backendUserId: backendUser.id,
+        role: backendUser.role,
+        isAdmin: isAdmin
+      });
+    }
+  }, [backendUser, isAdmin, user?.id]);
 
   return (
     <TelegramContext.Provider value={{ 
