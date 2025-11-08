@@ -58,6 +58,19 @@ export class MemStorage implements IStorage {
   }
 
   private seedData() {
+    // Admin user
+    const adminUser: User = {
+      id: "admin-1",
+      telegramId: BigInt("5928372261"),
+      firstName: "Admin",
+      lastName: "User",
+      username: "admin",
+      role: "admin",
+      barbershopId: null,
+      createdAt: new Date(),
+    };
+    this.users.set("admin-1", adminUser);
+    
     // Demo barbershops
     const shop1: Barbershop = {
       id: "1",
@@ -68,7 +81,7 @@ export class MemStorage implements IStorage {
       services: ["Soch olish - 50,000 so'm", "Soqol qirish - 30,000 so'm", "Styling - 40,000 so'm"],
       images: ["/images/luxury.png", "/images/barber-work.png"],
       reviewCount: 3,
-      ownerId: null,
+      ownerId: "admin-1",
       createdAt: new Date(),
     };
 
