@@ -1,12 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { getTelegramWebAppUser, type TelegramWebAppUser } from "@/lib/telegram";
 
-interface TelegramUser {
-  id: number;
-  first_name: string;
-  last_name?: string;
-  username?: string;
-  language_code?: string;
-}
+type TelegramUser = TelegramWebAppUser;
 
 interface BackendUser {
   id: string;
@@ -72,6 +67,41 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    const authenticate = (userData: TelegramUser) => {
+      fetch('/api/auth/telegram', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          telegramId: userData.id,
+          firstName: userData.first_name,
+          lastName: userData.last_name,
+          username: userData.username,
+        }),
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.user) {
+            setBackendUser(data.user);
+            console.log("✅ Backend user loaded:", data.user);
+          }
+        })
+        .catch(console.error);
+    };
+
+    const bootstrapUser = (userData: TelegramUser) => {
+      setUser(userData);
+      authenticate(userData);
+    };
+
+    const testUser: TelegramUser = {
+      id: 123456789, // Test customer ID
+      first_name: "Test",
+      last_name: "User",
+      username: "testuser",
+    };
+
     const tg = (window as any).Telegram?.WebApp;
     
     if (tg) {
@@ -82,101 +112,20 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
       document.body.style.backgroundColor = tg.backgroundColor || '#ffffff';
       
       setWebApp(tg);
-      
-      // User ma'lumotlarini olish
-      if (tg.initDataUnsafe?.user) {
-        const tgUser = tg.initDataUnsafe.user;
-        setUser(tgUser);
-        
-        // Backend ga auth request yuborish
-        fetch('/api/auth/telegram', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            telegramId: tgUser.id,
-            firstName: tgUser.first_name,
-            lastName: tgUser.last_name,
-            username: tgUser.username,
-          }),
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data.user) {
-            setBackendUser(data.user);
-            console.log("✅ Backend user loaded:", data.user);
-          }
-        })
-        .catch(console.error);
+
+      const webAppUser = getTelegramWebAppUser();
+      if (webAppUser) {
+        bootstrapUser(webAppUser);
       } else {
-        // Development mode - test user (CUSTOMER, not admin)
-        console.log("Development mode: using test user");
-        const testUser = {
-          id: 123456789, // Test customer ID
-          first_name: "Test",
-          last_name: "User",
-          username: "testuser",
-        };
-        setUser(testUser);
-        
-        // Backend ga auth request
-        fetch('/api/auth/telegram', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            telegramId: testUser.id,
-            firstName: testUser.first_name,
-            lastName: testUser.last_name,
-            username: testUser.username,
-          }),
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data.user) {
-            setBackendUser(data.user);
-            console.log("✅ Backend user loaded:", data.user);
-          }
-        })
-        .catch(console.error);
+        console.log("Telegram WebApp user not found, falling back to development test user");
+        bootstrapUser(testUser);
       }
       
       setIsReady(true);
     } else {
       // Telegram SDK mavjud emas (development)
       console.log("Telegram WebApp SDK not found - development mode");
-      const testUser = {
-        id: 123456789, // Test customer ID
-        first_name: "Test",
-        last_name: "User",
-        username: "testuser",
-      };
-      setUser(testUser);
-      
-      // Backend ga auth request
-      fetch('/api/auth/telegram', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          telegramId: testUser.id,
-          firstName: testUser.first_name,
-          lastName: testUser.last_name,
-          username: testUser.username,
-        }),
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.user) {
-          setBackendUser(data.user);
-          console.log("✅ Backend user loaded:", data.user);
-        }
-      })
-      .catch(console.error);
-      
+      bootstrapUser(testUser);
       setIsReady(true);
     }
   }, []);

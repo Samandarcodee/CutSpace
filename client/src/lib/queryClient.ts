@@ -1,24 +1,11 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { getTelegramId as resolveTelegramId } from "@/lib/telegram";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
     throw new Error(`${res.status}: ${text}`);
   }
-}
-
-// Telegram ID ni olish
-function getTelegramId(): string | null {
-  if (typeof window === "undefined") return null;
-  
-  // Telegram Web App dan
-  const tg = (window as any).Telegram?.WebApp;
-  if (tg?.initDataUnsafe?.user?.id) {
-    return tg.initDataUnsafe.user.id.toString();
-  }
-  
-  // Development mode - test customer ID (NOT admin)
-  return "123456789";
 }
 
 // Headers yaratish
@@ -29,7 +16,8 @@ function getHeaders(includeContentType = false): HeadersInit {
     headers["Content-Type"] = "application/json";
   }
   
-  const telegramId = getTelegramId();
+  const telegramId =
+    resolveTelegramId() ?? (import.meta.env.DEV ? "123456789" : null);
   if (telegramId) {
     headers["x-telegram-id"] = telegramId;
   }
