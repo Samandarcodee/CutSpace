@@ -1,4 +1,5 @@
 import { neon } from "@neondatabase/serverless";
+import "dotenv/config";
 
 // Database health check script
 async function checkDatabase() {

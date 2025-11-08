@@ -1,4 +1,5 @@
 import { neon } from "@neondatabase/serverless";
+import "dotenv/config";
 
 // Create database tables manually
 async function migrate() {

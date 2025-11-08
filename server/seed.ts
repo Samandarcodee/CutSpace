@@ -2,6 +2,7 @@ import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { eq } from "drizzle-orm";
 import { barbershops, reviews, users } from "@shared/schema";
+import "dotenv/config";
 
 // Seed database with initial data
 async function seed() {
