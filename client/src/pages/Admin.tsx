@@ -148,17 +148,27 @@ export default function Admin() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <div className="max-w-4xl mx-auto p-4">
-        <header className="bg-card border-b border-card-border p-4 mb-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Shield className="w-6 h-6 text-primary" />
-              <h1 className="text-xl font-bold">Admin Panel</h1>
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 pb-20">
+      <div className="max-w-6xl mx-auto p-4">
+        <header className="bg-gradient-to-r from-primary/10 to-primary/5 backdrop-blur-sm border-b border-card-border p-6 mb-6 rounded-lg">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="bg-primary/10 p-2 rounded-lg">
+                <Shield className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                  Admin Panel
+                </h1>
+                <p className="text-sm text-muted-foreground">Sartaroshxonalarni boshqarish</p>
+              </div>
             </div>
-            <Button onClick={() => { resetForm(); setShowDialog(true); }}>
+            <Button 
+              onClick={() => { resetForm(); setShowDialog(true); }}
+              className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 w-full sm:w-auto"
+            >
               <Plus className="w-4 h-4 mr-2" />
-              Qo'shish
+              Yangi qo'shish
             </Button>
           </div>
         </header>
