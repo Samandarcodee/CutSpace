@@ -46,7 +46,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       } else {
         // Agar user bor bo'lsa va admin ID bo'lsa, admin qilish
-        const isAdmin = telegramId === "5928372261" || telegramId === 5928372261;
+        const isAdmin = telegramId === "5928372261" || telegramId === 5928372261 || telegramIdBigInt === BigInt("5928372261");
         if (isAdmin && user.role !== "admin") {
           user = await storage.updateUserRole(user.id, "admin");
         }

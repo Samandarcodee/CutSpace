@@ -1,13 +1,16 @@
-import { Home, Calendar, User } from "lucide-react";
+import { Home, Calendar, User, Shield } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import { useTelegram } from "@/contexts/TelegramContext";
 
 export default function BottomNav() {
   const [location] = useLocation();
+  const { isAdmin } = useTelegram();
 
   const navItems = [
     { path: "/", icon: Home, label: "Asosiy", emoji: "🏠" },
     { path: "/bookings", icon: Calendar, label: "Yozilish", emoji: "📅" },
     { path: "/profile", icon: User, label: "Profil", emoji: "👤" },
+    ...(isAdmin ? [{ path: "/admin", icon: Shield, label: "Admin", emoji: "🛡️" }] : []),
   ];
 
   return (
