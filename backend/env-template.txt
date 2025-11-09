@@ -1,0 +1,19 @@
+# Copy this file to .env and fill in your values
+
+# Get your bot token from @BotFather on Telegram
+# Command: /newbot
+TELEGRAM_BOT_TOKEN=123456789:ABCdefGHIjklMNOpqrsTUVwxyz
+
+# Server port (default: 3000)
+PORT=3000
+
+# Get your Telegram ID from @userinfobot
+# Command: /start
+ADMIN_TELEGRAM_ID=123456789
+
+# Your web app URL (for production)
+# For local development: http://localhost:5173
+# For production: https://your-domain.com
+WEBAPP_URL=http://localhost:5173
+
+

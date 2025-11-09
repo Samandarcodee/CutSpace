@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - CutSpace</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f4f4f5;
+            padding: 20px;
+        }
+        .container { max-width: 800px; margin: 0 auto; }
+        h1 { margin-bottom: 30px; }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e5e5e5;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+        textarea { min-height: 100px; resize: vertical; }
+        
+        .file-upload {
+            border: 2px dashed #2481cc;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .file-upload:hover {
+            background: #f0f8ff;
+        }
+        .file-upload input[type="file"] {
+            display: none;
+        }
+        .upload-text {
+            color: #2481cc;
+            font-weight: 500;
+        }
+        .preview-image {
+            max-width: 200px;
+            max-height: 200px;
+            margin-top: 10px;
+            border-radius: 10px;
+        }
+        
+        .btn {
+            padding: 14px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: #2481cc;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #1a6ba8;
+        }
+        .btn-success {
+            background: #34c759;
+            color: white;
+        }
+        
+        .alert {
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+        }
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .services-list {
+            margin-top: 10px;
+        }
+        .service-item {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        .service-item input {
+            flex: 1;
+        }
+        .btn-remove {
+            padding: 8px 12px;
+            background: #ff3b30;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Admin Panel</h1>
+        
+        <div class="card">
+            <h2>Yangi Sartarosh Qo'shish</h2>
+            <div id="message"></div>
+            
+            <form id="barberForm" onsubmit="addBarber(event)">
+                <div class="form-group">
+                    <label>Ism</label>
+                    <input type="text" id="name" required placeholder="Bobur Rahimov">
+                </div>
+
+                <div class="form-group">
+                    <label>Telegram ID (ixtiyoriy)</label>
+                    <input type="text" id="telegram_id" placeholder="123456789">
+                </div>
+
+                <div class="form-group">
+                    <label>Tavsif</label>
+                    <textarea id="description" required placeholder="Professional sartarosh, 5 yillik tajriba"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Rasm yuklash</label>
+                    <div class="file-upload" onclick="document.getElementById('imageInput').click()">
+                        <input type="file" id="imageInput" accept="image/*" onchange="previewImage(event)">
+                        <div class="upload-text">
+                            📷 Rasm tanlash uchun bosing
+                        </div>
+                        <div id="imagePreview"></div>
+                    </div>
+                    <input type="hidden" id="avatar" value="👨‍🦱">
+                    <small style="color: #999;">Yoki emoji avatar: </small>
+                    <input type="text" id="emojiAvatar" placeholder="👨‍🦱" style="width: 80px; display: inline-block; margin-left: 8px;">
+                </div>
+
+                <div class="form-group">
+                    <label>Xizmatlar</label>
+                    <div class="services-list" id="servicesList">
+                        <div class="service-item">
+                            <input type="text" placeholder="Xizmat nomi" class="service-name" required>
+                            <input type="number" placeholder="Narx (so'm)" class="service-price" required>
+                            <button type="button" class="btn-remove" onclick="removeService(this)">×</button>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-success" onclick="addService()">+ Xizmat qo'shish</button>
+                </div>
+
+                <button type="submit" class="btn btn-primary">✅ Sartarosh qo'shish</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>📊 Barcha Sartaroshlar</h2>
+            <div id="barbersList"></div>
+        </div>
+    </div>
+
+    <script>
+        const API = 'http://localhost:3000/api';
+        let uploadedImageUrl = null;
+
+        function previewImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('imagePreview').innerHTML = 
+                        `<img src="${e.target.result}" class="preview-image">`;
+                }
+                reader.readAsDataURL(file);
+                
+                // Upload image immediately
+                uploadImage(file);
+            }
+        }
+
+        async function uploadImage(file) {
+            const formData = new FormData();
+            formData.append('image', file);
+
+            try {
+                const response = await fetch(`${API}/upload/barber-image`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    uploadedImageUrl = data.imageUrl;
+                    showMessage('Rasm yuklandi!', 'success');
+                } else {
+                    showMessage('Rasm yuklanmadi!', 'error');
+                }
+            } catch (err) {
+                showMessage('Xatolik: ' + err.message, 'error');
+            }
+        }
+
+        function addService() {
+            const servicesList = document.getElementById('servicesList');
+            const newService = document.createElement('div');
+            newService.className = 'service-item';
+            newService.innerHTML = `
+                <input type="text" placeholder="Xizmat nomi" class="service-name" required>
+                <input type="number" placeholder="Narx (so'm)" class="service-price" required>
+                <button type="button" class="btn-remove" onclick="removeService(this)">×</button>
+            `;
+            servicesList.appendChild(newService);
+        }
+
+        function removeService(btn) {
+            btn.parentElement.remove();
+        }
+
+        async function addBarber(event) {
+            event.preventDefault();
+
+            const services = [];
+            document.querySelectorAll('.service-item').forEach(item => {
+                const name = item.querySelector('.service-name').value;
+                const price = parseInt(item.querySelector('.service-price').value);
+                if (name && price) {
+                    services.push({ name, price });
+                }
+            });
+
+            const emojiAvatar = document.getElementById('emojiAvatar').value.trim();
+            const avatar = uploadedImageUrl || emojiAvatar || '👨‍🦱';
+
+            const barberData = {
+                name: document.getElementById('name').value,
+                telegram_id: document.getElementById('telegram_id').value || null,
+                description: document.getElementById('description').value,
+                avatar: avatar,
+                services: services,
+                rating: 5.0,
+                total_reviews: 0
+            };
+
+            try {
+                const response = await fetch(`${API}/barbers/add`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(barberData)
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    showMessage('✅ Sartarosh qo\'shildi!', 'success');
+                    document.getElementById('barberForm').reset();
+                    document.getElementById('imagePreview').innerHTML = '';
+                    uploadedImageUrl = null;
+                    loadBarbers();
+                } else {
+                    showMessage('❌ Xatolik yuz berdi', 'error');
+                }
+            } catch (err) {
+                showMessage('❌ Server bilan bog\'lanib bo\'lmadi', 'error');
+            }
+        }
+
+        function showMessage(text, type) {
+            const msg = document.getElementById('message');
+            msg.className = `alert alert-${type}`;
+            msg.textContent = text;
+            setTimeout(() => msg.innerHTML = '', 3000);
+        }
+
+        async function loadBarbers() {
+            try {
+                const response = await fetch(`${API}/barbers`);
+                const barbers = await response.json();
+                
+                document.getElementById('barbersList').innerHTML = barbers.map(b => `
+                    <div style="padding: 12px; border-bottom: 1px solid #e5e5e5;">
+                        <strong>${b.name}</strong> - ⭐️ ${b.rating.toFixed(1)}
+                        <span style="color: #999; margin-left: 10px;">
+                            ${typeof b.avatar === 'string' && b.avatar.startsWith('/uploads') 
+                                ? `<img src="http://localhost:3000${b.avatar}" style="width: 40px; height: 40px; border-radius: 50%; vertical-align: middle;">`
+                                : b.avatar
+                            }
+                        </span>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        loadBarbers();
+    </script>
+</body>
+</html>
+

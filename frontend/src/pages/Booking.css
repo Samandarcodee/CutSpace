@@ -1,0 +1,6 @@
+.bookings-list {
+  display: flex;
+  flex-direction: column;
+}
+
+

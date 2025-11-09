@@ -1,0 +1,99 @@
+.barber-card {
+  background: var(--tg-theme-secondary-bg-color);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.barber-card:active {
+  transform: scale(0.98);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.barber-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.barber-avatar {
+  font-size: 48px;
+  margin-right: 12px;
+  background: var(--tg-theme-bg-color);
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.barber-info {
+  flex: 1;
+}
+
+.barber-name {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: var(--tg-theme-text-color);
+}
+
+.barber-rating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.stars {
+  font-size: 14px;
+}
+
+.rating-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--tg-theme-text-color);
+}
+
+.rating-count {
+  font-size: 12px;
+  color: var(--tg-theme-hint-color);
+}
+
+.barber-description {
+  font-size: 14px;
+  color: var(--tg-theme-hint-color);
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+
+.barber-services {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.service-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--tg-theme-bg-color);
+  border-radius: 8px;
+}
+
+.service-name {
+  font-size: 14px;
+  color: var(--tg-theme-text-color);
+}
+
+.service-price {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--tg-theme-button-color);
+}
+
+
