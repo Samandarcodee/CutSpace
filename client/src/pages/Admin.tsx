@@ -143,16 +143,14 @@ export default function Admin() {
           setImageFiles(prev => [...prev, result]);
         };
         reader.readAsDataURL(file);
+      } else {
+        toast({
+          title: "Xatolik",
+          description: "Faqat rasm fayllarini yuklang",
+          variant: "destructive",
+        });
       }
     });
-  };
-
-  const addImageUrl = () => {
-    const url = formData.images.trim();
-    if (url) {
-      setImageFiles(prev => [...prev, url]);
-      setFormData({ ...formData, images: "" });
-    }
   };
 
   const removeImage = (index: number) => {
@@ -343,36 +341,23 @@ export default function Admin() {
                   </div>
                 )}
 
-                {/* Rasm qo'shish */}
-                <div className="space-y-2">
-                  <label className="block">
-                    <div className="flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md cursor-pointer hover:bg-primary/90">
-                      <Upload className="w-4 h-4" />
-                      <span>📷 Rasm yuklash</span>
-                    </div>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={handleImageUpload}
-                      className="hidden"
-                    />
-                  </label>
-                  
-                  <div className="text-center text-xs text-muted-foreground">yoki</div>
-                  
-                  <div className="flex gap-2">
-                    <Input
-                      value={formData.images}
-                      onChange={(e) => setFormData({ ...formData, images: e.target.value })}
-                      placeholder="🔗 URL kiriting"
-                      onKeyDown={(e) => e.key === 'Enter' && addImageUrl()}
-                    />
-                    <Button type="button" variant="outline" onClick={addImageUrl}>
-                      +
-                    </Button>
+                {/* Faqat fayl yuklash */}
+                <label className="block">
+                  <div className="flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-3 rounded-md cursor-pointer hover:bg-primary/90 transition-colors">
+                    <Upload className="w-5 h-5" />
+                    <span className="font-medium">📷 Rasm yuklash</span>
                   </div>
-                </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                </label>
+                <p className="text-xs text-muted-foreground mt-1 text-center">
+                  Galeriya yoki kameradan
+                </p>
               </div>
               <div className="flex gap-2">
                 <Button
