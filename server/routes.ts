@@ -3,8 +3,34 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertBookingSchema, insertReviewSchema, insertBarbershopSchema, insertUserSchema } from "@shared/schema";
 import { sendTelegramNotification } from "./telegram.js";
-import { authenticateUser, requireAdmin, requireBarber, parseTelegramWebAppData } from "./auth";
+import { authenticateUser, requireAdmin, requireBarber } from "./auth";
 import type { User } from "@shared/schema";
+import multer, { MulterError } from "multer";
+import path from "path";
+import { ensureUploadsDir, uploadsDir } from "./uploads";
+
+ensureUploadsDir();
+
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: uploadsDir,
+    filename: (_req, file, cb) => {
+      const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+      const extension = path.extname(file.originalname).toLowerCase() || ".jpg";
+      cb(null, `${uniqueSuffix}${extension}`);
+    },
+  }),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB
+  },
+  fileFilter: (_req, file, cb) => {
+    if (!file.mimetype.startsWith("image/")) {
+      cb(new Error("Faqat rasm fayllarini yuklash mumkin"));
+      return;
+    }
+    cb(null, true);
+  },
+});
 
 // Helper function: BigInt ni string ga o'zgartirish
 function serializeUser(user: User) {
@@ -80,17 +106,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ==================== ADMIN ROUTES ====================
   
-  // Admin: Yangi sartaroshxona qo'shish
-  app.post("/api/admin/barbershops", authenticateUser, requireAdmin, async (req, res) => {
-    try {
-      const validatedData = insertBarbershopSchema.parse(req.body);
-      const barbershop = await storage.createBarbershop(validatedData);
-      res.json(barbershop);
-    } catch (error) {
-      console.error("Create barbershop error:", error);
-      res.status(400).json({ error: "Invalid barbershop data" });
-    }
-  });
+    // Admin: Yangi sartaroshxona qo'shish
+    app.post("/api/admin/barbershops", authenticateUser, requireAdmin, async (req, res) => {
+      try {
+        const validatedData = insertBarbershopSchema.parse(req.body);
+        const barbershop = await storage.createBarbershop(validatedData);
+        res.json(barbershop);
+      } catch (error) {
+        console.error("Create barbershop error:", error);
+        res.status(400).json({ error: "Invalid barbershop data" });
+      }
+    });
+
+    // Admin: Rasm yuklash
+    app.post("/api/admin/uploads/image", authenticateUser, requireAdmin, (req, res) => {
+      upload.single("image")(req, res, (err: unknown) => {
+        if (err) {
+          if (err instanceof MulterError) {
+            return res.status(400).json({ error: err.message });
+          }
+          const message =
+            err instanceof Error ? err.message : "Rasm yuklashda xatolik yuz berdi";
+          return res.status(400).json({ error: message });
+        }
+
+        const file = (req as any).file as Express.Multer.File | undefined;
+        if (!file) {
+          return res.status(400).json({ error: "Rasm topilmadi" });
+        }
+
+        const publicUrl = `/uploads/${file.filename}`;
+
+        res.json({
+          url: publicUrl,
+          filename: file.originalname,
+          size: file.size,
+          mimeType: file.mimetype,
+        });
+      });
+    });
 
   // Admin: Sartaroshxonani yangilash
   app.put("/api/admin/barbershops/:id", authenticateUser, requireAdmin, async (req, res) => {

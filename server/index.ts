@@ -3,8 +3,12 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeTelegramBot } from "./telegram";
+import { ensureUploadsDir, uploadsDir } from "./uploads";
 
 const app = express();
+
+ensureUploadsDir();
+app.use("/uploads", express.static(uploadsDir));
 
 declare module 'http' {
   interface IncomingMessage {
