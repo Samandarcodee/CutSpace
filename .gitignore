@@ -9,3 +9,6 @@ vite.config.ts.*
 .env
 .env.local
 .env.production
+
+# Uploaded media
+uploads/
