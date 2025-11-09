@@ -17,6 +17,7 @@ Modern sartaroshxonalar uchun onlayn band qilish va boshqaruv tizimi. Telegram M
 - ➕ Yangi sartaroshxona qo'shish
 - ✏️ Sartaroshxona ma'lumotlarini tahrirlash
 - 🗑️ Sartaroshxonalarni o'chirish
+- 🖼️ Sartaroshxona rasmlarini fayl yoki URL orqali yuklash
 - 👥 Foydalanuvchilar rollarini boshqarish
 
 ### ✂️ Sartarosh Paneli
@@ -111,6 +112,8 @@ npm start
 ```
 
 Server `http://localhost:5000` da ishga tushadi! 🎉
+
+> ℹ️ Admin panel orqali yuklangan rasmlar avtomatik ravishda loyiha ildizidagi `uploads/` papkasida saqlanadi va `https://host/uploads/<file>` ko'rinishida xizmat qiladi.
 
 ## 📊 Database Health Check
 
@@ -227,6 +230,7 @@ GET    /api/auth/me                  # Current user
 POST   /api/admin/barbershops        # Sartaroshxona qo'shish
 PUT    /api/admin/barbershops/:id    # Sartaroshxonani tahrirlash
 DELETE /api/admin/barbershops/:id    # Sartaroshxonani o'chirish
+POST   /api/admin/uploads/image      # Rasm yuklash (multipart/form-data)
 PUT    /api/admin/users/:id/role     # User role o'zgartirish
 ```
 
