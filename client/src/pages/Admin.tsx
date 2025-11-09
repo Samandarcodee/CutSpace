@@ -133,9 +133,8 @@ export default function Admin() {
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files) return;
+    if (!files || files.length === 0) return;
 
-    // Har bir faylni o'qish va base64 ga o'zgartirish
     Array.from(files).forEach((file) => {
       if (file.type.startsWith('image/')) {
         const reader = new FileReader();
@@ -144,14 +143,16 @@ export default function Admin() {
           setImageFiles(prev => [...prev, result]);
         };
         reader.readAsDataURL(file);
-      } else {
-        toast({
-          title: "Xatolik",
-          description: "Faqat rasm fayllari qabul qilinadi",
-          variant: "destructive",
-        });
       }
     });
+  };
+
+  const addImageUrl = () => {
+    const url = formData.images.trim();
+    if (url) {
+      setImageFiles(prev => [...prev, url]);
+      setFormData({ ...formData, images: "" });
+    }
   };
 
   const removeImage = (index: number) => {
@@ -320,46 +321,58 @@ export default function Admin() {
               <div>
                 <label className="text-sm font-medium mb-2 block">Rasmlar</label>
                 
-                {/* Yuklangan rasmlar preview */}
+                {/* Rasmlar ko'rinishi */}
                 {imageFiles.length > 0 && (
                   <div className="grid grid-cols-3 gap-2 mb-3">
                     {imageFiles.map((img, idx) => (
-                      <div key={idx} className="relative group aspect-square">
+                      <div key={idx} className="relative aspect-square">
                         <img 
                           src={img} 
-                          alt={`Preview ${idx + 1}`}
-                          className="w-full h-full object-cover rounded-lg border-2 border-border"
+                          alt=""
+                          className="w-full h-full object-cover rounded border"
                         />
                         <button
                           type="button"
                           onClick={() => removeImage(idx)}
-                          className="absolute top-1 right-1 bg-destructive text-destructive-foreground p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute -top-1 -right-1 bg-red-500 text-white w-5 h-5 rounded-full flex items-center justify-center"
                         >
-                          <X className="w-3 h-3" />
+                          ×
                         </button>
                       </div>
                     ))}
                   </div>
                 )}
 
-                {/* Fayl yuklash tugmasi */}
-                <label className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary hover:bg-primary/5 transition-all">
-                  <Upload className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">
-                    {imageFiles.length === 0 ? "Rasm yuklash" : "Yana qo'shish"}
-                  </span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={handleImageUpload}
-                    className="hidden"
-                  />
-                </label>
-                
-                <p className="text-xs text-muted-foreground mt-2">
-                  Galeriya yoki kameradan rasm yuklashingiz mumkin
-                </p>
+                {/* Rasm qo'shish */}
+                <div className="space-y-2">
+                  <label className="block">
+                    <div className="flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md cursor-pointer hover:bg-primary/90">
+                      <Upload className="w-4 h-4" />
+                      <span>📷 Rasm yuklash</span>
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                  </label>
+                  
+                  <div className="text-center text-xs text-muted-foreground">yoki</div>
+                  
+                  <div className="flex gap-2">
+                    <Input
+                      value={formData.images}
+                      onChange={(e) => setFormData({ ...formData, images: e.target.value })}
+                      placeholder="🔗 URL kiriting"
+                      onKeyDown={(e) => e.key === 'Enter' && addImageUrl()}
+                    />
+                    <Button type="button" variant="outline" onClick={addImageUrl}>
+                      +
+                    </Button>
+                  </div>
+                </div>
               </div>
               <div className="flex gap-2">
                 <Button
