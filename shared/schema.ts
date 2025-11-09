@@ -18,6 +18,7 @@ export const users = pgTable("users", {
 export const barbershops = pgTable("barbershops", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
+  description: text("description"),
   rating: real("rating").notNull().default(0),
   address: text("address").notNull(),
   phone: text("phone").notNull(),

@@ -70,11 +70,12 @@ export class MemStorage implements IStorage {
       createdAt: new Date(),
     };
     this.users.set("admin-1", adminUser);
-    
+
     // Demo barbershops
     const shop1: Barbershop = {
       id: "1",
       name: "Premium Barber Shop",
+      description: "Premium darajadagi xizmatlar va zamonaviy interyerga ega barbershop.",
       rating: 4.8,
       address: "Amir Temur ko'chasi 15, Yunusobod tumani",
       phone: "+998 90 123 45 67",
@@ -88,6 +89,7 @@ export class MemStorage implements IStorage {
     const shop2: Barbershop = {
       id: "2",
       name: "Classic Barber",
+      description: "Klassik uslubdagi erkaklar salonida tajribali ustalar xizmat ko'rsatadi.",
       rating: 4.6,
       address: "Mustaqillik ko'chasi 42, Mirobod tumani",
       phone: "+998 90 234 56 78",
@@ -101,6 +103,7 @@ export class MemStorage implements IStorage {
     const shop3: Barbershop = {
       id: "3",
       name: "Modern Style Barber",
+      description: "Moda yo'nalishidagi soch turmaklari va premium xizmatlar markazi.",
       rating: 4.9,
       address: "Buyuk Ipak Yo'li 88, Shayxontohur tumani",
       phone: "+998 90 345 67 89",
@@ -169,13 +172,14 @@ export class MemStorage implements IStorage {
     return this.barbershops.get(id);
   }
 
-  async createBarbershop(barbershop: InsertBarbershop): Promise<Barbershop> {
+    async createBarbershop(barbershop: InsertBarbershop): Promise<Barbershop> {
     const id = randomUUID();
     const newShop: Barbershop = { 
       ...barbershop, 
       id, 
       rating: barbershop.rating || 0, 
-      reviewCount: 0,
+        description: barbershop.description ?? null,
+        reviewCount: 0,
       createdAt: new Date()
     };
     this.barbershops.set(id, newShop);

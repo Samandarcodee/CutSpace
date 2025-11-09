@@ -19,6 +19,7 @@ export default function Admin() {
   const [editingShop, setEditingShop] = useState<Barbershop | null>(null);
   const [formData, setFormData] = useState({
     name: "",
+    description: "",
     address: "",
     phone: "",
     services: "",
@@ -108,6 +109,7 @@ export default function Admin() {
   const resetForm = () => {
     setFormData({
       name: "",
+      description: "",
       address: "",
       phone: "",
       services: "",
@@ -120,6 +122,7 @@ export default function Admin() {
     setEditingShop(shop);
     setFormData({
       name: shop.name,
+      description: shop.description || "",
       address: shop.address,
       phone: shop.phone || "",
       services: shop.services.join("\n"),
@@ -180,6 +183,11 @@ export default function Admin() {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <h3 className="font-bold text-lg mb-1">{shop.name}</h3>
+                    {shop.description && (
+                      <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
+                        {shop.description}
+                      </p>
+                    )}
                     <div className="flex items-center gap-1 text-sm mb-2">
                       <span className="text-yellow-500">⭐</span>
                       <span className="font-semibold">{shop.rating.toFixed(1)}</span>
@@ -260,6 +268,15 @@ export default function Admin() {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Premium Barber Shop"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Izoh</label>
+                <Textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Masalan: Zamonaviy interyer va premium xizmatlar."
+                  rows={2}
                 />
               </div>
               <div>
