@@ -38,6 +38,8 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
   const refreshUser = async () => {
     if (!user) return;
     
+    const tg = getTelegramWebApp();
+    
     try {
       const response = await fetch('/api/auth/telegram', {
         method: 'POST',
@@ -49,6 +51,7 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
           firstName: user.first_name,
           lastName: user.last_name,
           username: user.username,
+          initData: tg?.initData, // Send initData for HMAC validation
         }),
       });
       
@@ -104,7 +107,7 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
           console.log("✅ Telegram user topildi:", tgUser);
           setUser(tgUser);
 
-          // Backend ga auth request
+          // Backend ga auth request with initData for validation
           fetch("/api/auth/telegram", {
             method: 'POST',
             headers: {
@@ -115,6 +118,7 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
               firstName: tgUser.first_name,
               lastName: tgUser.last_name,
               username: tgUser.username,
+              initData: tg.initData, // Send initData for HMAC validation
             }),
           })
           .then(res => {

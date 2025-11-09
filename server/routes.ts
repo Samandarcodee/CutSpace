@@ -20,10 +20,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Telegram orqali kirish / ro'yxatdan o'tish
   app.post("/api/auth/telegram", async (req, res) => {
     try {
-      const { telegramId, firstName, lastName, username } = req.body;
+      const { telegramId, firstName, lastName, username, initData } = req.body;
       
       if (!telegramId) {
         return res.status(400).json({ error: "Telegram ID required" });
+      }
+      
+      // IMPORTANT: Validate initData with HMAC SHA-256 if provided
+      const botToken = process.env.TELEGRAM_BOT_TOKEN || "8555285589:AAEEaVbjFtXCRa54_VSxLIhTx6Pqy5f9bZc";
+      
+      // Development mode: skip validation if no initData
+      const isDevelopment = process.env.NODE_ENV === "development";
+      
+      if (initData) {
+        // Import validation functions
+        const { validateTelegramWebAppData, checkAuthTimestamp } = await import("./auth");
+        
+        // Validate timestamp (must be within 1 hour)
+        if (!checkAuthTimestamp(initData)) {
+          console.error("❌ Auth data is expired");
+          return res.status(401).json({ 
+            error: "Authentication data expired. Please reopen the Mini App." 
+          });
+        }
+        
+        // Validate HMAC signature
+        if (!validateTelegramWebAppData(initData, botToken)) {
+          console.error("❌ Invalid Telegram signature");
+          return res.status(401).json({ 
+            error: "Invalid authentication data. Please reopen the Mini App from Telegram bot." 
+          });
+        }
+        
+        console.log("✅ Telegram initData validated successfully");
+      } else if (!isDevelopment) {
+        console.warn("⚠️ No initData provided in production mode");
+        return res.status(400).json({ 
+          error: "initData required for authentication. Please open from Telegram bot." 
+        });
       }
 
       // Telegram ID ni BigInt ga o'zgartirish
@@ -64,7 +98,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      console.log(`📤 Sending response - User role: ${user.role}`);
+      console.log(`📤 Sending response - User role: ${user?.role}`);
+      if (!user) {
+        return res.status(500).json({ error: "Failed to create or update user" });
+      }
       res.json({ user: serializeUser(user) });
     } catch (error) {
       console.error("❌ Auth error:", error);
