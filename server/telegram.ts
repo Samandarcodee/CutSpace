@@ -67,19 +67,29 @@ Toshkent Sartarosh botiga xush kelibsiz! 💈
 🔹 Sharhlar va reytinglar
 🔹 Telegram orqali xabarnomalar
 
-Mini Appni ishga tushirish uchun quyidagi tugmani bosing! 👇
+Mini Appni ochish uchun quyidagi tugmani bosing! 👇
       `;
       
+      // Send message with BOTH inline and keyboard buttons
       bot?.sendMessage(chatId, welcomeMessage, {
         reply_markup: {
-          keyboard: [
+          inline_keyboard: [
             [{ text: "🚀 Mini App ni ochish", web_app: { url: WEB_APP_URL } }],
-            [{ text: "💈 Sartaroshxonalar" }, { text: "🗓️ Yozilish" }],
-            [{ text: "ℹ️ Ma'lumot" }, { text: "📞 Bog'lanish" }]
-          ],
-          resize_keyboard: true
+            [{ text: "📱 Yozilishlarim", web_app: { url: WEB_APP_URL + "/bookings" } }]
+          ]
         }
       }).then(() => {
+        // Also send keyboard for easy access
+        bot?.sendMessage(chatId, "Tez kirish uchun:", {
+          reply_markup: {
+            keyboard: [
+              [{ text: "🚀 Mini App ni ochish", web_app: { url: WEB_APP_URL } }],
+              [{ text: "💈 Sartaroshxonalar" }, { text: "🗓️ Yozilish" }],
+              [{ text: "ℹ️ Ma'lumot" }, { text: "📞 Bog'lanish" }]
+            ],
+            resize_keyboard: true
+          }
+        });
         console.log(`✅ /start yuborildi: ${firstName} (${chatId})`);
       }).catch(err => {
         console.error("❌ Xabar yuborishda xatolik:", err.message);

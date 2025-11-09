@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { storage } from "./storage";
 import type { User, UserRole } from "@shared/schema";
+import crypto from "crypto";
 
 // Telegram Web App Data ni tekshirish
 export function parseTelegramWebAppData(initData: string): any {
@@ -13,6 +14,84 @@ export function parseTelegramWebAppData(initData: string): any {
   } catch (error) {
     console.error("Error parsing Telegram data:", error);
     return null;
+  }
+}
+
+// Telegram initData ni HMAC SHA-256 bilan validatsiya qilish
+export function validateTelegramWebAppData(initData: string, botToken: string): boolean {
+  try {
+    const urlParams = new URLSearchParams(initData);
+    const hash = urlParams.get('hash');
+    
+    if (!hash) {
+      console.error('❌ Hash not found in initData');
+      return false;
+    }
+    
+    // Hash ni olib tashlab, qolgan parametrlarni tartiblash
+    urlParams.delete('hash');
+    
+    // Parametrlarni tartiblab data_check_string yaratish
+    const dataCheckArray: string[] = [];
+    for (const [key, value] of Array.from(urlParams.entries()).sort()) {
+      dataCheckArray.push(`${key}=${value}`);
+    }
+    const dataCheckString = dataCheckArray.join('\n');
+    
+    // Bot token dan secret key yaratish
+    const secretKey = crypto
+      .createHmac('sha256', 'WebAppData')
+      .update(botToken)
+      .digest();
+    
+    // Data check string dan hash yaratish
+    const calculatedHash = crypto
+      .createHmac('sha256', secretKey)
+      .update(dataCheckString)
+      .digest('hex');
+    
+    // Hisoblangan hash bilan kelgan hash ni solishtirish
+    const isValid = calculatedHash === hash;
+    
+    if (!isValid) {
+      console.error('❌ Telegram initData validation failed');
+      console.error('Received hash:', hash);
+      console.error('Calculated hash:', calculatedHash);
+    }
+    
+    return isValid;
+  } catch (error) {
+    console.error('❌ Error validating Telegram data:', error);
+    return false;
+  }
+}
+
+// Auth timestamp ni tekshirish (1 soat ichida bo'lishi kerak)
+export function checkAuthTimestamp(initData: string): boolean {
+  try {
+    const urlParams = new URLSearchParams(initData);
+    const authDate = urlParams.get('auth_date');
+    
+    if (!authDate) {
+      console.error('❌ auth_date not found in initData');
+      return false;
+    }
+    
+    const authTimestamp = parseInt(authDate, 10);
+    const currentTimestamp = Math.floor(Date.now() / 1000);
+    const timeDiff = currentTimestamp - authTimestamp;
+    
+    // 1 soat = 3600 soniya
+    const isValid = timeDiff < 3600;
+    
+    if (!isValid) {
+      console.error('❌ Auth data is too old:', timeDiff, 'seconds');
+    }
+    
+    return isValid;
+  } catch (error) {
+    console.error('❌ Error checking auth timestamp:', error);
+    return false;
   }
 }
 
