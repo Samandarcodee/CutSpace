@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Edit, Plus, Shield, MapPin } from "lucide-react";
+import { Trash2, Edit, Plus, Shield, MapPin, Upload, X, Image as ImageIcon } from "lucide-react";
 import type { Barbershop } from "@shared/schema";
 
 export default function Admin() {
@@ -24,6 +24,7 @@ export default function Admin() {
     services: "",
     images: "",
   });
+  const [imageFiles, setImageFiles] = useState<string[]>([]);
 
   const { data: barbershops = [], isLoading } = useQuery<Barbershop[]>({
     queryKey: ["/api/barbershops"],
@@ -47,7 +48,7 @@ export default function Admin() {
       return await apiRequest("POST", "/api/admin/barbershops", {
         ...data,
         services: data.services.split("\n").filter((s: string) => s.trim()),
-        images: data.images.split("\n").filter((s: string) => s.trim()),
+        images: imageFiles.length > 0 ? imageFiles : data.images.split("\n").filter((s: string) => s.trim()),
       });
     },
     onSuccess: () => {
@@ -70,7 +71,7 @@ export default function Admin() {
       return await apiRequest("PUT", `/api/admin/barbershops/${id}`, {
         ...data,
         services: data.services.split("\n").filter((s: string) => s.trim()),
-        images: data.images.split("\n").filter((s: string) => s.trim()),
+        images: imageFiles.length > 0 ? imageFiles : data.images.split("\n").filter((s: string) => s.trim()),
       });
     },
     onSuccess: () => {
@@ -113,6 +114,7 @@ export default function Admin() {
       services: "",
       images: "",
     });
+    setImageFiles([]);
     setEditingShop(null);
   };
 
@@ -125,7 +127,35 @@ export default function Admin() {
       services: shop.services.join("\n"),
       images: shop.images.join("\n"),
     });
+    setImageFiles(shop.images);
     setShowDialog(true);
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    // Har bir faylni o'qish va base64 ga o'zgartirish
+    Array.from(files).forEach((file) => {
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const result = event.target?.result as string;
+          setImageFiles(prev => [...prev, result]);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        toast({
+          title: "Xatolik",
+          description: "Faqat rasm fayllari qabul qilinadi",
+          variant: "destructive",
+        });
+      }
+    });
+  };
+
+  const removeImage = (index: number) => {
+    setImageFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = () => {
@@ -288,13 +318,48 @@ export default function Admin() {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium">Rasmlar (har birini yangi qatorda)</label>
-                <Textarea
-                  value={formData.images}
-                  onChange={(e) => setFormData({ ...formData, images: e.target.value })}
-                  placeholder="/images/luxury.png&#10;/images/barber-work.png"
-                  rows={3}
-                />
+                <label className="text-sm font-medium mb-2 block">Rasmlar</label>
+                
+                {/* Yuklangan rasmlar preview */}
+                {imageFiles.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2 mb-3">
+                    {imageFiles.map((img, idx) => (
+                      <div key={idx} className="relative group aspect-square">
+                        <img 
+                          src={img} 
+                          alt={`Preview ${idx + 1}`}
+                          className="w-full h-full object-cover rounded-lg border-2 border-border"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(idx)}
+                          className="absolute top-1 right-1 bg-destructive text-destructive-foreground p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Fayl yuklash tugmasi */}
+                <label className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary hover:bg-primary/5 transition-all">
+                  <Upload className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">
+                    {imageFiles.length === 0 ? "Rasm yuklash" : "Yana qo'shish"}
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                </label>
+                
+                <p className="text-xs text-muted-foreground mt-2">
+                  Galeriya yoki kameradan rasm yuklashingiz mumkin
+                </p>
               </div>
               <div className="flex gap-2">
                 <Button
