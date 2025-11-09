@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
@@ -95,6 +95,17 @@
             background: #f8d7da;
             color: #721c24;
         }
+        .alert-info {
+            background: #e0f2fe;
+            color: #0c4a6e;
+        }
+        .form-hint {
+            display: block;
+            margin-top: 4px;
+            font-size: 14px;
+            color: #64748b;
+            line-height: 1.4;
+        }
         
         .services-list {
             margin-top: 10px;
@@ -119,7 +130,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>🔧 Admin Panel</h1>
+        <h1> Admin Panel</h1>
         
         <div class="card">
             <h2>Yangi Sartarosh Qo'shish</h2>
@@ -128,6 +139,7 @@
             <form id="barberForm" onsubmit="addBarber(event)">
                 <div class="form-group">
                     <label>Ism</label>
+                    <small class="form-hint">Sartaroshning to'liq ism-familyasini yoki salon nomini kiriting.</small>
                     <input type="text" id="name" required placeholder="Bobur Rahimov">
                 </div>
 
@@ -163,7 +175,7 @@
                             <input type="radio" name="avatarType" value="emoji" onchange="toggleAvatarType()"> 
                             Emoji avatar
                         </label>
-                        <input type="text" id="emojiAvatar" placeholder="👨‍🦱" 
+                        <input type="text" id="emojiAvatar" placeholder="" 
                                style="width: 100px; margin-top: 8px; display: none;">
                     </div>
 
@@ -176,13 +188,13 @@
                         <div class="file-upload" id="fileUploadArea" style="display: none; margin-top: 8px;" 
                              onclick="document.getElementById('imageInput').click()">
                             <input type="file" id="imageInput" accept="image/*" onchange="previewFileImage(event)">
-                            <div class="upload-text">📷 Rasm tanlash uchun bosing</div>
+                            <div class="upload-text"> Rasm tanlash uchun bosing</div>
                         </div>
                     </div>
 
                     <!-- Preview -->
                     <div id="imagePreview"></div>
-                    <input type="hidden" id="finalAvatar" value="👨‍🦱">
+                    <input type="hidden" id="finalAvatar" value="">
                 </div>
 
                 <div class="form-group">
@@ -191,25 +203,27 @@
                         <div class="service-item">
                             <input type="text" placeholder="Xizmat nomi" class="service-name" required>
                             <input type="number" placeholder="Narx (so'm)" class="service-price" required>
-                            <button type="button" class="btn-remove" onclick="removeService(this)">×</button>
+                            <button type="button" class="btn-remove" onclick="removeService(this)"></button>
                         </div>
                     </div>
                     <button type="button" class="btn btn-success" onclick="addService()">+ Xizmat qo'shish</button>
                 </div>
 
-                <button type="submit" class="btn btn-primary">✅ Sartarosh qo'shish</button>
+                <button type="submit" class="btn btn-primary"> Sartarosh qo'shish</button>
             </form>
         </div>
 
         <div class="card">
-            <h2>📊 Barcha Sartaroshlar</h2>
+            <h2> Barcha Sartaroshlar</h2>
             <div id="barbersList"></div>
         </div>
     </div>
 
     <script>
         const API = 'http://localhost:3000/api';
+        const API_ROOT = API.replace(/\/api\/?$/, '');
         let uploadedImageUrl = null;
+        let isUploading = false;
 
         function toggleAvatarType() {
             const selectedType = document.querySelector('input[name="avatarType"]:checked').value;
@@ -218,12 +232,16 @@
             document.getElementById('emojiAvatar').style.display = selectedType === 'emoji' ? 'block' : 'none';
             document.getElementById('fileUploadArea').style.display = selectedType === 'file' ? 'block' : 'none';
             document.getElementById('imagePreview').innerHTML = '';
+            if (selectedType !== 'file') {
+                uploadedImageUrl = null;
+                isUploading = false;
+            }
         }
 
         function previewUrlImage(url) {
             if (url) {
                 document.getElementById('imagePreview').innerHTML = 
-                    `<img src="${url}" class="preview-image" onerror="this.src=''; this.alt='❌ Rasm yuklanmadi'">`;
+                    `<img src="${url}" class="preview-image" onerror="this.src=''; this.alt=' Rasm yuklanmadi'">`;
                 document.getElementById('finalAvatar').value = url;
             }
         }
@@ -248,21 +266,42 @@
             formData.append('image', file);
 
             try {
+                isUploading = true;
+                showMessage(' Rasm yuklanmoqda...', 'info');
+
                 const response = await fetch(`${API}/upload/barber-image`, {
                     method: 'POST',
                     body: formData
                 });
 
-                const data = await response.json();
-                if (data.success) {
-                    uploadedImageUrl = `${API.replace('/api', '')}${data.imageUrl}`;
-                    document.getElementById('finalAvatar').value = uploadedImageUrl;
-                    showMessage('✅ Rasm yuklandi!', 'success');
-                } else {
-                    showMessage('❌ Xatolik: ' + data.error, 'error');
+                const responseText = await response.text();
+                let data = {};
+
+                if (responseText) {
+                    try {
+                        data = JSON.parse(responseText);
+                    } catch (parseError) {
+                        throw new Error('Server noto\'g\'ri javob qaytardi');
+                    }
                 }
+
+                if (!response.ok || !data.success) {
+                    const errorMessage = data && data.error ? data.error : 'Rasm yuklab bo\'lmadi';
+                    throw new Error(errorMessage);
+                }
+
+                const imageUrl = data.imageUrl || '';
+                uploadedImageUrl = imageUrl.startsWith('http')
+                    ? imageUrl
+                    : `${API_ROOT}${imageUrl}`;
+                document.getElementById('finalAvatar').value = uploadedImageUrl;
+                showMessage(' Rasm yuklandi!', 'success');
             } catch (err) {
-                showMessage('❌ Server bilan bog\'lanib bo\'lmadi', 'error');
+                uploadedImageUrl = null;
+                const message = err && err.message ? err.message : 'Server bilan bog\'lanib bo\'lmadi';
+                showMessage(` Xatolik: ${message}`, 'error');
+            } finally {
+                isUploading = false;
             }
         }
 
@@ -273,7 +312,7 @@
             newService.innerHTML = `
                 <input type="text" placeholder="Xizmat nomi" class="service-name" required>
                 <input type="number" placeholder="Narx (so'm)" class="service-price" required>
-                <button type="button" class="btn-remove" onclick="removeService(this)">×</button>
+                <button type="button" class="btn-remove" onclick="removeService(this)"></button>
             `;
             servicesList.appendChild(newService);
         }
@@ -284,6 +323,11 @@
 
         async function addBarber(event) {
             event.preventDefault();
+
+            if (isUploading) {
+                showMessage(' Iltimos, rasm yuklanishi tugashini kuting.', 'info');
+                return;
+            }
 
             const services = [];
             document.querySelectorAll('.service-item').forEach(item => {
@@ -296,14 +340,14 @@
 
             // Get avatar based on selected type
             const avatarType = document.querySelector('input[name="avatarType"]:checked').value;
-            let avatar = '👨‍🦱'; // default
+            let avatar = ''; // default
 
             if (avatarType === 'url') {
-                avatar = document.getElementById('avatarUrl').value.trim() || '👨‍🦱';
+                avatar = document.getElementById('avatarUrl').value.trim() || '';
             } else if (avatarType === 'emoji') {
-                avatar = document.getElementById('emojiAvatar').value.trim() || '👨‍🦱';
+                avatar = document.getElementById('emojiAvatar').value.trim() || '';
             } else if (avatarType === 'file') {
-                avatar = uploadedImageUrl || '👨‍🦱';
+                avatar = uploadedImageUrl || '';
             }
 
             const barberData = {
@@ -325,7 +369,7 @@
 
                 const data = await response.json();
                 if (data.success) {
-                    showMessage('✅ Sartarosh qo\'shildi!', 'success');
+                    showMessage(' Sartarosh qo\'shildi!', 'success');
                     document.getElementById('barberForm').reset();
                     document.getElementById('imagePreview').innerHTML = '';
                     uploadedImageUrl = null;
@@ -333,10 +377,10 @@
                     toggleAvatarType();
                     loadBarbers();
                 } else {
-                    showMessage('❌ Xatolik: ' + (data.error || 'Noma\'lum xato'), 'error');
+                    showMessage(' Xatolik: ' + (data.error || 'Noma\'lum xato'), 'error');
                 }
             } catch (err) {
-                showMessage('❌ Server bilan bog\'lanib bo\'lmadi', 'error');
+                showMessage(' Server bilan bog\'lanib bo\'lmadi', 'error');
             }
         }
 
@@ -344,7 +388,13 @@
             const msg = document.getElementById('message');
             msg.className = `alert alert-${type}`;
             msg.textContent = text;
-            setTimeout(() => msg.innerHTML = '', 3000);
+            if (showMessage.timeoutId) {
+                clearTimeout(showMessage.timeoutId);
+            }
+            showMessage.timeoutId = setTimeout(() => {
+                msg.textContent = '';
+                msg.className = '';
+            }, 3000);
         }
 
         async function loadBarbers() {
@@ -357,14 +407,14 @@
                     if (b.avatar.startsWith('http://') || b.avatar.startsWith('https://')) {
                         avatarHtml = `<img src="${b.avatar}" style="width: 40px; height: 40px; border-radius: 50%; vertical-align: middle; object-fit: cover;">`;
                     } else if (b.avatar.startsWith('/uploads')) {
-                        avatarHtml = `<img src="http://localhost:3000${b.avatar}" style="width: 40px; height: 40px; border-radius: 50%; vertical-align: middle; object-fit: cover;">`;
+                        avatarHtml = `<img src="${API_ROOT}${b.avatar}" style="width: 40px; height: 40px; border-radius: 50%; vertical-align: middle; object-fit: cover;">`;
                     } else {
                         avatarHtml = `<span style="font-size: 32px;">${b.avatar}</span>`;
                     }
                     
                     return `
                         <div style="padding: 12px; border-bottom: 1px solid #e5e5e5;">
-                            <strong>${b.name}</strong> - ⭐️ ${b.rating.toFixed(1)}
+                            <strong>${b.name}</strong> -  ${b.rating.toFixed(1)}
                             <span style="margin-left: 10px;">${avatarHtml}</span>
                         </div>
                     `;
@@ -378,4 +428,3 @@
     </script>
 </body>
 </html>
-

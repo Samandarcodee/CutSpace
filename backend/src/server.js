@@ -1,8 +1,9 @@
-import express from 'express';
+﻿import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import multer from 'multer';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -30,9 +31,15 @@ app.use(cors());
 app.use(express.json());
 
 // Multer configuration for image upload
+const uploadDirectory = path.join(__dirname, '..', 'uploads');
+
+if (!fs.existsSync(uploadDirectory)) {
+  fs.mkdirSync(uploadDirectory, { recursive: true });
+}
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, '..', 'uploads'));
+    cb(null, uploadDirectory);
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -214,21 +221,37 @@ app.get('/api/reviews/barber/:barber_id', (req, res) => {
 });
 
 // Upload barber image
-app.post('/api/upload/barber-image', upload.single('image'), (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'Fayl yuklanmadi' });
+app.post('/api/upload/barber-image', (req, res) => {
+  upload.single('image')(req, res, (error) => {
+    if (error) {
+      const message = error.message || 'Rasm yuklashda xatolik yuz berdi';
+      let statusCode = 500;
+
+      if (error instanceof multer.MulterError) {
+        if (error.code === 'LIMIT_FILE_SIZE') {
+          statusCode = 413;
+        } else {
+          statusCode = 400;
+        }
+      }
+
+      return res.status(statusCode).json({
+        success: false,
+        error: message
+      });
     }
-    
+
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: 'Fayl yuklanmadi' });
+    }
+
     const imageUrl = `/uploads/${req.file.filename}`;
-    res.json({ 
-      success: true, 
-      imageUrl: imageUrl,
-      message: 'Rasm muvaffaqiyatli yuklandi' 
+    res.json({
+      success: true,
+      imageUrl,
+      message: 'Rasm muvaffaqiyatli yuklandi'
     });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+  });
 });
 
 // Add new barber (admin)
@@ -244,7 +267,7 @@ app.post('/api/barbers/add', (req, res) => {
       name,
       telegram_id,
       description,
-      avatar: avatar || '👨‍🦱',
+      avatar: avatar || '',
       services,
       rating: rating || 5.0,
       total_reviews: total_reviews || 0
@@ -261,7 +284,8 @@ app.post('/api/barbers/add', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Server is running on port ${PORT}`);
+  console.log(` Server is running on port ${PORT}`);
 });
+
 
 
