@@ -140,10 +140,59 @@ export default function Admin() {
   };
 
   const handleSubmit = () => {
+    const trimmedName = formData.name.trim();
+    const trimmedAddress = formData.address.trim();
+    const trimmedPhone = formData.phone.trim();
+    const servicesList = formData.services
+      .split("\n")
+      .map((service) => service.trim())
+      .filter(Boolean);
+    const imagesList = formData.images
+      .split("\n")
+      .map((image) => image.trim())
+      .filter(Boolean);
+
+    if (!trimmedName || !trimmedAddress || !trimmedPhone) {
+      toast({
+        title: "Majburiy maydonlar bo'sh",
+        description: "Nomi, manzil va telefon raqami to'ldirilishi kerak.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (servicesList.length === 0) {
+      toast({
+        title: "Xizmatlar kiritilmagan",
+        description: "Kamida bitta xizmatni kiriting.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (imagesList.length === 0) {
+      toast({
+        title: "Rasm havolalari kiritilmagan",
+        description: "Kamida bitta rasm manzilini kiriting.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const payload = {
+      ...formData,
+      name: trimmedName,
+      address: trimmedAddress,
+      phone: trimmedPhone,
+      description: formData.description.trim(),
+      services: servicesList.join("\n"),
+      images: imagesList.join("\n"),
+    };
+
     if (editingShop) {
-      updateMutation.mutate({ id: editingShop.id, data: formData });
+      updateMutation.mutate({ id: editingShop.id, data: payload });
     } else {
-      createMutation.mutate(formData);
+      createMutation.mutate(payload);
     }
   };
 
