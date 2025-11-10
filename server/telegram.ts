@@ -18,33 +18,34 @@ export function initializeTelegramBot() {
   const isProduction = process.env.NODE_ENV === "production" || process.env.RENDER;
   
   try {
+    console.log("🤖 Telegram Bot ishga tushmoqda...");
+    console.log(`🔑 Bot Token: ${BOT_TOKEN.substring(0, 10)}...`);
+    
+    // Avval webhook-ni o'chirish
+    const deleteWebhookUrl = `https://api.telegram.org/bot${BOT_TOKEN}/deleteWebhook`;
+    fetch(deleteWebhookUrl)
+      .then(() => console.log("✅ Webhook o'chirildi"))
+      .catch(err => console.log("⚠️ Webhook o'chirish xatoligi:", err.message));
+    
     // Polling konfiguratsiyasi
     bot = new TelegramBot(BOT_TOKEN, {
       polling: {
         interval: 300,
         autoStart: true,
         params: {
-          timeout: 10
+          timeout: 10,
+          allowed_updates: ["message", "callback_query"]
         }
       }
     });
     
-    // Production da polling error ni ignore qilish
-    if (isProduction) {
-      bot.on('polling_error', (error) => {
-        // 409 Conflict - boshqa instance ishlayapti, bu normal
-        if (error.message.includes('409')) {
-          console.log("ℹ️ Bot polling: boshqa instance ishlayapti (normal)");
-          return;
-        }
-        console.error('❌ Polling xatolik:', error.message);
-      });
-    }
-    
-    console.log("🤖 Telegram Bot ishga tushmoqda...");
-    
-    // Bot tayyor bo'lganda
+    // Polling error handler
     bot.on('polling_error', (error) => {
+      // 409 Conflict - boshqa instance ishlayapti
+      if (error.message.includes('409')) {
+        console.log("ℹ️ Bot polling: boshqa instance ishlayapti (normal)");
+        return;
+      }
       console.error('❌ Polling xatolik:', error.message);
     });
 
@@ -54,11 +55,13 @@ export function initializeTelegramBot() {
     
     // /start command
     bot.onText(/\/start/, async (msg) => {
-      const chatId = msg.chat.id;
-      const firstName = msg.from?.first_name || "Mehmon";
-      
-      const welcomeMessage = `
-Assalomu alaykum, ${firstName}! 👋
+      try {
+        const chatId = msg.chat.id;
+        const firstName = msg.from?.first_name || "Mehmon";
+        
+        console.log(`📨 /start komandasi olindi: ${firstName} (${chatId})`);
+        
+        const welcomeMessage = `Assalomu alaykum, ${firstName}! 👋
 
 Toshkent Sartarosh botiga xush kelibsiz! 💈
 
@@ -67,23 +70,23 @@ Toshkent Sartarosh botiga xush kelibsiz! 💈
 🔹 Sharhlar va reytinglar
 🔹 Telegram orqali xabarnomalar
 
-Mini Appni ishga tushirish uchun quyidagi tugmani bosing! 👇
-      `;
-      
-      bot?.sendMessage(chatId, welcomeMessage, {
-        reply_markup: {
-          keyboard: [
-            [{ text: "🚀 Mini App ni ochish", web_app: { url: WEB_APP_URL } }],
-            [{ text: "💈 Sartaroshxonalar" }, { text: "🗓️ Yozilish" }],
-            [{ text: "ℹ️ Ma'lumot" }, { text: "📞 Bog'lanish" }]
-          ],
-          resize_keyboard: true
-        }
-      }).then(() => {
-        console.log(`✅ /start yuborildi: ${firstName} (${chatId})`);
-      }).catch(err => {
-        console.error("❌ Xabar yuborishda xatolik:", err.message);
-      });
+Mini Appni ishga tushirish uchun quyidagi tugmani bosing! 👇`;
+        
+        await bot?.sendMessage(chatId, welcomeMessage, {
+          reply_markup: {
+            keyboard: [
+              [{ text: "🚀 Mini App ni ochish", web_app: { url: WEB_APP_URL } }],
+              [{ text: "💈 Sartaroshxonalar" }, { text: "🗓️ Yozilish" }],
+              [{ text: "ℹ️ Ma'lumot" }, { text: "📞 Bog'lanish" }]
+            ],
+            resize_keyboard: true
+          }
+        });
+        
+        console.log(`✅ /start javobi yuborildi: ${firstName} (${chatId})`);
+      } catch (err: any) {
+        console.error("❌ /start xabar yuborishda xatolik:", err.message);
+      }
     });
     
     // /help command
