@@ -17,7 +17,6 @@ import type { Barbershop, Booking } from "@shared/schema";
 
 interface FormData {
   name: string;
-  description: string;
   address: string;
   phone: string;
   services: Array<{ name: string; price: string }>;
@@ -44,7 +43,6 @@ export default function Admin() {
   
   const [formData, setFormData] = useState<FormData>({
     name: "",
-    description: "",
     address: "",
     phone: "",
     services: [],
@@ -115,7 +113,6 @@ export default function Admin() {
 
       return await apiRequest("POST", "/api/admin/barbershops", {
         name: data.name.trim(),
-        description: data.description.trim() || undefined,
         address: data.address.trim(),
         phone: data.phone.trim(),
         services: servicesFormatted,
@@ -149,7 +146,6 @@ export default function Admin() {
 
       return await apiRequest("PUT", `/api/admin/barbershops/${id}`, {
         name: data.name.trim(),
-        description: data.description.trim() || undefined,
         address: data.address.trim(),
         phone: data.phone.trim(),
         services: servicesFormatted,
@@ -198,7 +194,6 @@ export default function Admin() {
   const resetForm = () => {
     setFormData({
       name: "",
-      description: "",
       address: "",
       phone: "",
       services: [],
@@ -224,7 +219,6 @@ export default function Admin() {
 
     setFormData({
       name: shop.name,
-      description: shop.description || "",
       address: shop.address,
       phone: shop.phone || "",
       services: parsedServices,
@@ -502,14 +496,9 @@ export default function Admin() {
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
-                      <CardTitle className="text-lg mb-2 group-hover:text-primary transition-colors truncate">
+                      <CardTitle className="text-lg group-hover:text-primary transition-colors truncate">
                         {shop.name}
                       </CardTitle>
-                      {shop.description && (
-                        <CardDescription className="line-clamp-2 text-sm">
-                          {shop.description}
-                        </CardDescription>
-                      )}
                     </div>
                     <div className="flex gap-1 shrink-0">
                       <Button
@@ -852,18 +841,6 @@ export default function Admin() {
                       {formErrors.name}
                     </p>
                   )}
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium mb-2 block">
-                    Izoh (ixtiyoriy)
-                  </label>
-                  <Textarea
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Masalan: Zamonaviy interyer va professional xizmatlar"
-                    rows={2}
-                  />
                 </div>
 
                 <div>
