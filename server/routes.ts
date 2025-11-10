@@ -91,26 +91,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin: Yangi sartaroshxona qo'shish
   app.post("/api/admin/barbershops", authenticateUser, requireAdmin, async (req, res) => {
     try {
+      console.log("📝 Creating barbershop with data:", JSON.stringify(req.body, null, 2));
       const validatedData = insertBarbershopSchema.parse(req.body);
+      console.log("✅ Data validated successfully");
       const barbershop = await storage.createBarbershop(validatedData);
+      console.log("✅ Barbershop created:", barbershop.id);
       res.json(barbershop);
-    } catch (error) {
-      console.error("Create barbershop error:", error);
-      res.status(400).json({ error: "Invalid barbershop data" });
+    } catch (error: any) {
+      console.error("❌ Create barbershop error:", error);
+      const errorMessage = error?.issues ? 
+        error.issues.map((i: any) => `${i.path.join('.')}: ${i.message}`).join(", ") :
+        error?.message || "Invalid barbershop data";
+      res.status(400).json({ error: errorMessage });
     }
   });
 
   // Admin: Sartaroshxonani yangilash
   app.put("/api/admin/barbershops/:id", authenticateUser, requireAdmin, async (req, res) => {
     try {
-      const barbershop = await storage.updateBarbershop(req.params.id, req.body);
+      console.log("📝 Updating barbershop", req.params.id, "with data:", JSON.stringify(req.body, null, 2));
+      
+      // Partial validation uchun
+      const updateData: any = {};
+      if (req.body.name) updateData.name = req.body.name;
+      if (req.body.description !== undefined) updateData.description = req.body.description;
+      if (req.body.address) updateData.address = req.body.address;
+      if (req.body.phone) updateData.phone = req.body.phone;
+      if (req.body.rating !== undefined) updateData.rating = req.body.rating;
+      if (req.body.services) updateData.services = req.body.services;
+      if (req.body.images) updateData.images = req.body.images;
+      if (req.body.ownerId !== undefined) updateData.ownerId = req.body.ownerId;
+      
+      const barbershop = await storage.updateBarbershop(req.params.id, updateData);
       if (!barbershop) {
         return res.status(404).json({ error: "Barbershop not found" });
       }
+      console.log("✅ Barbershop updated:", barbershop.id);
       res.json(barbershop);
-    } catch (error) {
-      console.error("Update barbershop error:", error);
-      res.status(500).json({ error: "Failed to update barbershop" });
+    } catch (error: any) {
+      console.error("❌ Update barbershop error:", error);
+      const errorMessage = error?.message || "Failed to update barbershop";
+      res.status(500).json({ error: errorMessage });
     }
   });
 
