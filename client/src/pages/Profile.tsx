@@ -7,25 +7,40 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Switch } from "@/components/ui/switch";
+import type { Booking } from "@shared/schema";
 
 export default function Profile() {
   const { user: telegramUser, backendUser, isAdmin, refreshUser } = useTelegram();
   const { theme, setTheme, toggleTheme } = useTheme();
   
   // Real bookings statistikasi
-  const { data: bookings = [] } = useQuery({
+  type BookingWithExtras = Booking & { customerId?: string };
+
+  const { data: bookings = [] } = useQuery<BookingWithExtras[]>({
     queryKey: ["/api/bookings"],
   });
   
-  const userBookings = bookings.filter((b: any) => 
-    b.customerName === `${telegramUser?.first_name} ${telegramUser?.last_name || ''}`.trim() ||
-    backendUser?.id === b.customerId
-  );
+  const telegramFullName = `${telegramUser?.first_name || ""} ${telegramUser?.last_name || ""}`.trim();
+  const userBookings = bookings.filter((booking) => {
+    const matchesName = telegramFullName ? booking.customerName === telegramFullName : false;
+    const matchesCustomerId = backendUser?.id
+      ? booking.customerId === backendUser.id
+      : false;
+    return matchesName || matchesCustomerId;
+  });
   
   const stats = [
     { label: "Jami yozilishlar", value: userBookings.length.toString() },
-    { label: "Faol yozilishlar", value: userBookings.filter((b: any) => b.status === "pending" || b.status === "confirmed").length.toString() },
-    { label: "Bajarilgan", value: userBookings.filter((b: any) => b.status === "completed").length.toString() },
+    {
+      label: "Faol yozilishlar",
+      value: userBookings
+        .filter((booking) => booking.status === "pending" || booking.status === "confirmed")
+        .length.toString(),
+    },
+    {
+      label: "Bajarilgan",
+      value: userBookings.filter((booking) => booking.status === "completed").length.toString(),
+    },
   ];
   
   const user = {

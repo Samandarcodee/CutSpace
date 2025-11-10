@@ -148,7 +148,16 @@ export class MemStorage implements IStorage {
 
   async createUser(user: InsertUser): Promise<User> {
     const id = randomUUID();
-    const newUser: User = { id, ...user, createdAt: new Date() };
+    const newUser: User = {
+      id,
+      telegramId: user.telegramId,
+      firstName: user.firstName ?? null,
+      lastName: user.lastName ?? null,
+      username: user.username ?? null,
+      role: user.role ?? "customer",
+      barbershopId: user.barbershopId ?? null,
+      createdAt: new Date(),
+    };
     this.users.set(id, newUser);
     return newUser;
   }
@@ -179,6 +188,7 @@ export class MemStorage implements IStorage {
       id,
       rating: barbershop.rating || 0,
       description: barbershop.description ? barbershop.description : null,
+      ownerId: barbershop.ownerId ?? null,
       reviewCount: 0,
       createdAt: new Date(),
     };
@@ -193,6 +203,9 @@ export class MemStorage implements IStorage {
       if ("description" in data) {
         updated.description =
           data.description && data.description !== "" ? (data.description as string) : null;
+      }
+      if ("ownerId" in data) {
+        updated.ownerId = data.ownerId ?? null;
       }
       this.barbershops.set(id, updated);
       return updated;

@@ -40,32 +40,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`👤 User found: ${!!user}, Is Admin ID: ${isAdmin}`);
       
-      // Agar yo'q bo'lsa, yangi user yaratish
-      if (!user) {
-        console.log(`➕ Creating new user - Role: ${isAdmin ? "admin" : "customer"}`);
-        user = await storage.createUser({
-          telegramId: BigInt(telegramId),
-          firstName,
-          lastName,
-          username,
-          role: isAdmin ? "admin" : "customer",
-          barbershopId: null,
-        });
-        console.log(`✅ User created - ID: ${user.id}, Role: ${user.role}`);
-      } else {
-        console.log(`👤 Existing user - ID: ${user.id}, Current Role: ${user.role}`);
-        // Agar user bor bo'lsa va admin ID bo'lsa, admin qilish
-        if (isAdmin && user.role !== "admin") {
-          console.log(`🔄 Updating user role to admin`);
-          user = await storage.updateUserRole(user.id, "admin");
-          console.log(`✅ User role updated to admin`);
-        } else if (isAdmin) {
-          console.log(`✅ User already has admin role`);
+        // Agar yo'q bo'lsa, yangi user yaratish
+        if (!user) {
+          console.log(`➕ Creating new user - Role: ${isAdmin ? "admin" : "customer"}`);
+          user = await storage.createUser({
+            telegramId: BigInt(telegramId),
+            firstName,
+            lastName,
+            username,
+            role: isAdmin ? "admin" : "customer",
+            barbershopId: null,
+          });
+          console.log(`✅ User created - ID: ${user.id}, Role: ${user.role}`);
+        } else {
+          console.log(`👤 Existing user - ID: ${user.id}, Current Role: ${user.role}`);
+          // Agar user bor bo'lsa va admin ID bo'lsa, admin qilish
+          if (isAdmin && user.role !== "admin") {
+            console.log(`🔄 Updating user role to admin`);
+            const updatedUser = await storage.updateUserRole(user.id, "admin");
+            if (!updatedUser) {
+              throw new Error("Failed to update user role to admin");
+            }
+            user = updatedUser;
+            console.log(`✅ User role updated to admin`);
+          } else if (isAdmin) {
+            console.log(`✅ User already has admin role`);
+          }
         }
-      }
 
-      console.log(`📤 Sending response - User role: ${user.role}`);
-      res.json({ user: serializeUser(user) });
+        if (!user) {
+          throw new Error("User entity is undefined after processing");
+        }
+
+        console.log(`📤 Sending response - User role: ${user.role}`);
+        res.json({ user: serializeUser(user) });
     } catch (error) {
       console.error("❌ Auth error:", error);
       res.status(500).json({ error: "Authentication failed" });

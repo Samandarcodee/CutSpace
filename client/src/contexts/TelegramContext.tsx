@@ -9,6 +9,7 @@ interface BackendUser {
   username?: string;
   role: "customer" | "barber" | "admin";
   barbershopId?: string;
+  createdAt?: string;
 }
 
 interface TelegramContextType {
