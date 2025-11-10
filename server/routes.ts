@@ -70,45 +70,33 @@ const normalizeRating = (value: unknown): number | undefined => {
 };
 
 const barbershopRequestSchema = insertBarbershopSchema.extend({
-  name: z
-    .string({ required_error: "Name is required" })
-    .trim()
-    .min(1, "Name is required"),
-  address: z
-    .string({ required_error: "Address is required" })
-    .trim()
-    .min(1, "Address is required"),
-  phone: z
-    .string({ required_error: "Phone is required" })
-    .trim()
-    .min(1, "Phone is required"),
-  description: z
-    .string()
-    .trim()
-    .transform((val) => (val.length > 0 ? val : undefined))
-    .optional(),
-  services: z
-    .array(z.string().trim().min(1, "Service name cannot be empty"), {
+  name: z.string({ required_error: "Name is required" }),
+  address: z.string({ required_error: "Address is required" }),
+  phone: z.string({ required_error: "Phone is required" }),
+  description: z.string().optional(),
+  services: z.array(
+    z.string().trim(),
+    {
       invalid_type_error: "Services must be an array of strings",
-    })
-    .min(1, "At least one service is required"),
-  images: z
-    .array(z.string().trim().min(1, "Image URL cannot be empty"), {
+    },
+  ),
+  images: z.array(
+    z.string().trim(),
+    {
       invalid_type_error: "Images must be an array of strings",
-    })
-    .min(1, "At least one image is required"),
+    },
+  ),
   rating: z
     .number()
     .min(0, "Rating cannot be negative")
     .max(5, "Rating must be 5 or less")
     .optional(),
-  ownerId: z
-    .string()
-    .trim()
-    .min(1, "Owner id cannot be empty")
-    .optional()
-    .nullable(),
+  ownerId: z.string().trim().min(1, "Owner id cannot be empty").optional().nullable(),
 });
+
+const DEFAULT_BARBERSHOP_NAME = "Nomlanmagan sartaroshxona";
+const DEFAULT_BARBERSHOP_ADDRESS = "Manzil ko'rsatilmagan";
+const DEFAULT_BARBERSHOP_PHONE = "Telefon raqami ko'rsatilmagan";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // ==================== AUTH ROUTES ====================
@@ -209,7 +197,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           rating: normalizeRating((req.body as any)?.rating),
         };
 
-        const validationResult = barbershopRequestSchema.safeParse(normalizedPayload);
+        const preparedPayload = {
+          name: normalizedPayload.name ?? DEFAULT_BARBERSHOP_NAME,
+          description: normalizedPayload.description,
+          address: normalizedPayload.address ?? DEFAULT_BARBERSHOP_ADDRESS,
+          phone: normalizedPayload.phone ?? DEFAULT_BARBERSHOP_PHONE,
+          services: normalizedPayload.services.length > 0 ? normalizedPayload.services : [],
+          images: normalizedPayload.images.length > 0 ? normalizedPayload.images : [],
+          ownerId: normalizedPayload.ownerId,
+          rating: normalizedPayload.rating,
+        };
+
+        console.log("✅ Normalized barbershop payload:", preparedPayload);
+
+        const validationResult = barbershopRequestSchema.safeParse(preparedPayload);
 
         if (!validationResult.success) {
           const formattedErrors = validationResult.error.issues.map((issue) => ({
@@ -225,16 +226,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
 
-        const dataToSave = {
+        const barbershop = await storage.createBarbershop({
           ...validationResult.data,
           rating: validationResult.data.rating ?? 0,
-        };
-
-        const barbershop = await storage.createBarbershop(dataToSave);
+        });
         return res.status(201).json(barbershop);
       } catch (error) {
         console.error("Create barbershop error:", error);
-        return res.status(500).json({ error: "Failed to create barbershop" });
+        return res.status(500).json({
+          error: "Failed to create barbershop",
+          details: error instanceof Error ? error.message : String(error),
+        });
       }
     });
 
