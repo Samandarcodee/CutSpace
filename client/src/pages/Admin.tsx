@@ -48,11 +48,16 @@ export default function Admin() {
       const description =
         typeof data.description === "string" ? data.description.trim() : undefined;
 
+      // Services va images allaqachon array sifatida kelib qoladi
       return await apiRequest("POST", "/api/admin/barbershops", {
-        ...data,
+        name: data.name,
         description: description || undefined,
-        services: data.services.split("\n").filter((s: string) => s.trim()),
-        images: data.images.split("\n").filter((s: string) => s.trim()),
+        address: data.address,
+        phone: data.phone,
+        rating: data.rating || 0,
+        services: Array.isArray(data.services) ? data.services : data.services.split("\n").filter((s: string) => s.trim()),
+        images: Array.isArray(data.images) ? data.images : data.images.split("\n").filter((s: string) => s.trim()),
+        ownerId: data.ownerId || undefined,
       });
     },
     onSuccess: () => {
@@ -75,11 +80,16 @@ export default function Admin() {
       const description =
         typeof data.description === "string" ? data.description.trim() : undefined;
 
+      // Services va images allaqachon array sifatida kelib qoladi
       return await apiRequest("PUT", `/api/admin/barbershops/${id}`, {
-        ...data,
+        name: data.name,
         description: description || undefined,
-        services: data.services.split("\n").filter((s: string) => s.trim()),
-        images: data.images.split("\n").filter((s: string) => s.trim()),
+        address: data.address,
+        phone: data.phone,
+        rating: data.rating,
+        services: Array.isArray(data.services) ? data.services : data.services.split("\n").filter((s: string) => s.trim()),
+        images: Array.isArray(data.images) ? data.images : data.images.split("\n").filter((s: string) => s.trim()),
+        ownerId: data.ownerId,
       });
     },
     onSuccess: () => {
@@ -180,13 +190,13 @@ export default function Admin() {
     }
 
     const payload = {
-      ...formData,
       name: trimmedName,
       address: trimmedAddress,
       phone: trimmedPhone,
       description: formData.description.trim(),
-      services: servicesList.join("\n"),
-      images: imagesList.join("\n"),
+      services: servicesList, // Array sifatida yuborish
+      images: imagesList, // Array sifatida yuborish
+      rating: 0,
     };
 
     if (editingShop) {

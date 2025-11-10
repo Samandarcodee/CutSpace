@@ -58,6 +58,8 @@ export const insertUserSchema = createInsertSchema(users).omit({
 
 export const insertBarbershopSchema = createInsertSchema(barbershops, {
   description: z.string().trim().nullish(),
+  services: z.array(z.string()).min(1, "Kamida bitta xizmat kerak"),
+  images: z.array(z.string()).min(1, "Kamida bitta rasm kerak"),
 }).omit({
   id: true,
   reviewCount: true,
