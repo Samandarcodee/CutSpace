@@ -73,7 +73,6 @@ const barbershopRequestSchema = insertBarbershopSchema.extend({
   name: z.string({ required_error: "Name is required" }),
   address: z.string({ required_error: "Address is required" }),
   phone: z.string({ required_error: "Phone is required" }),
-  description: z.string().optional(),
   services: z.array(
     z.string().trim(),
     {
@@ -188,7 +187,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const normalizedPayload = {
           name: normalizeRequiredString((req.body as any)?.name),
-          description: normalizeOptionalString((req.body as any)?.description),
           address: normalizeRequiredString((req.body as any)?.address),
           phone: normalizeRequiredString((req.body as any)?.phone),
           services: normalizeStringArray((req.body as any)?.services),
@@ -199,7 +197,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         const preparedPayload = {
           name: normalizedPayload.name ?? DEFAULT_BARBERSHOP_NAME,
-          description: normalizedPayload.description,
           address: normalizedPayload.address ?? DEFAULT_BARBERSHOP_ADDRESS,
           phone: normalizedPayload.phone ?? DEFAULT_BARBERSHOP_PHONE,
           services: normalizedPayload.services.length > 0 ? normalizedPayload.services : [],

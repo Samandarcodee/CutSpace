@@ -199,14 +199,7 @@ export default function Home() {
           <DialogHeader>
             <DialogTitle>{selectedShop?.name}</DialogTitle>
             <DialogDescription>
-              <div className="space-y-1">
-                {selectedShop?.description && (
-                  <p className="text-sm text-muted-foreground">
-                    {selectedShop.description}
-                  </p>
-                )}
-                <p className="text-sm text-muted-foreground">{selectedShop?.address}</p>
-              </div>
+              <p className="text-sm text-muted-foreground">{selectedShop?.address}</p>
             </DialogDescription>
           </DialogHeader>
 
