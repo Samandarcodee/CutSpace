@@ -58,6 +58,11 @@ export const insertUserSchema = createInsertSchema(users).omit({
 
 export const insertBarbershopSchema = createInsertSchema(barbershops, {
   description: z.string().trim().nullish(),
+  rating: z
+    .number()
+    .min(0, "Rating 0 dan kichik bo'lishi mumkin emas")
+    .max(5, "Rating 5 dan katta bo'lishi mumkin emas")
+    .default(0),
 }).omit({
   id: true,
   reviewCount: true,
