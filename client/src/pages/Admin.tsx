@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ChangeEvent } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useTelegram } from "@/contexts/TelegramContext";
@@ -25,10 +25,16 @@ export default function Admin() {
     services: "",
     images: "",
   });
+  const [isUploading, setIsUploading] = useState(false);
 
   const { data: barbershops = [], isLoading } = useQuery<Barbershop[]>({
     queryKey: ["/api/barbershops"],
   });
+
+  const imageList = formData.images
+    .split("\n")
+    .map((img) => img.trim())
+    .filter(Boolean);
 
   // Admin tekshirish
   if (!isAdmin) {
@@ -124,6 +130,63 @@ export default function Admin() {
       images: "",
     });
     setEditingShop(null);
+  };
+
+  const handleImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) {
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const uploadedUrls: string[] = [];
+      for (const file of Array.from(files)) {
+        const payload = new FormData();
+        payload.append("image", file);
+
+        const response = await apiRequest("POST", "/api/uploads", payload);
+        const result = await response.json();
+        if (result?.url) {
+          uploadedUrls.push(result.url);
+        }
+      }
+
+      if (uploadedUrls.length > 0) {
+        setFormData((prev) => ({
+          ...prev,
+          images: [prev.images, ...uploadedUrls].filter(Boolean).join("\n"),
+        }));
+        toast({
+          title: "Rasm yuklandi!",
+          description: `${uploadedUrls.length} ta rasm qo'shildi`,
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Xatolik",
+        description: error?.message || "Rasm yuklashda muammo yuz berdi",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+      event.target.value = "";
+    }
+  };
+
+  const handleRemoveImage = (imageUrl: string) => {
+    setFormData((prev) => {
+      const remaining = prev.images
+        .split("\n")
+        .map((img) => img.trim())
+        .filter(Boolean)
+        .filter((img) => img !== imageUrl);
+
+      return {
+        ...prev,
+        images: remaining.join("\n"),
+      };
+    });
   };
 
   const handleEdit = (shop: Barbershop) => {
@@ -361,15 +424,64 @@ export default function Admin() {
                   rows={4}
                 />
               </div>
-              <div>
-                <label className="text-sm font-medium">Rasmlar (har birini yangi qatorda)</label>
-                <Textarea
-                  value={formData.images}
-                  onChange={(e) => setFormData({ ...formData, images: e.target.value })}
-                  placeholder="/images/luxury.png&#10;/images/barber-work.png"
-                  rows={3}
-                />
-              </div>
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Rasm yuklash</label>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleImageUpload}
+                      disabled={isUploading}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Maksimal hajm 5MB. Yuklangan rasmlar pastdagi ro&apos;yxatga qo&apos;shiladi.
+                    </p>
+                    {isUploading && (
+                      <p className="text-xs text-primary font-medium">Yuklanmoqda...</p>
+                    )}
+                  </div>
+
+                  {imageList.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-muted-foreground">Aktiv rasmlar</p>
+                      <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
+                        {imageList.map((img, idx) => (
+                          <div
+                            key={`${img}-${idx}`}
+                            className="flex items-center gap-2 rounded border border-border bg-muted/40 px-2 py-1 text-xs"
+                          >
+                            <span className="flex-1 truncate">{img}</span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="px-2"
+                              onClick={() => handleRemoveImage(img)}
+                              disabled={
+                                isUploading || createMutation.isPending || updateMutation.isPending
+                              }
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">
+                      Rasmlar (URL ro&apos;yxati, har birini yangi qatorda)
+                    </label>
+                    <Textarea
+                      value={formData.images}
+                      onChange={(e) => setFormData({ ...formData, images: e.target.value })}
+                      placeholder="/images/luxury.png&#10;/images/barber-work.png"
+                      rows={3}
+                    />
+                  </div>
+                </div>
               <div className="flex gap-2">
                 <Button
                   onClick={handleSubmit}

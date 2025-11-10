@@ -40,10 +40,12 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  const isFormData =
+    typeof FormData !== "undefined" && data instanceof FormData;
   const res = await fetch(url, {
     method,
-    headers: getHeaders(!!data),
-    body: data ? JSON.stringify(data) : undefined,
+    headers: getHeaders(!isFormData && !!data),
+    body: isFormData ? (data as FormData) : data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
 

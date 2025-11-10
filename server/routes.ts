@@ -1,11 +1,41 @@
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertBookingSchema, insertReviewSchema, insertBarbershopSchema, insertUserSchema } from "@shared/schema";
 import { z } from "zod";
 import { sendTelegramNotification } from "./telegram.js";
-import { authenticateUser, requireAdmin, requireBarber, parseTelegramWebAppData } from "./auth";
+import { authenticateUser, requireAdmin, requireBarber } from "./auth";
 import type { User } from "@shared/schema";
+import multer, { type FileFilterCallback } from "multer";
+import path from "path";
+import { randomUUID } from "crypto";
+import { uploadsDir } from "./uploads";
+
+const imageStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    cb(null, uploadsDir);
+  },
+  filename: (_req, file, cb) => {
+    const fileExtension = path.extname(file.originalname) || ".png";
+    cb(null, `${randomUUID()}${fileExtension}`);
+  },
+});
+
+function imageFileFilter(_req: Request, file: Express.Multer.File, cb: FileFilterCallback) {
+  if (file.mimetype.startsWith("image/")) {
+    cb(null, true);
+  } else {
+    cb(new Error("Faqat rasm fayllari ruxsat etilgan"));
+  }
+}
+
+const upload = multer({
+  storage: imageStorage,
+  fileFilter: imageFileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB
+  },
+});
 
 // Helper function: BigInt ni string ga o'zgartirish
 function serializeUser(user: User) {
@@ -252,6 +282,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Update barbershop error:", error);
       res.status(500).json({ error: "Failed to update barbershop" });
     }
+  });
+
+  // Admin: Rasm yuklash
+  app.post("/api/uploads", authenticateUser, requireAdmin, (req: Request, res: Response) => {
+    upload.single("image")(req, res, (error) => {
+      if (error) {
+        const message = error instanceof Error ? error.message : "Rasm yuklashda xatolik";
+        return res.status(400).json({ error: message });
+      }
+
+      const file = req.file;
+      if (!file) {
+        return res.status(400).json({ error: "Fayl topilmadi" });
+      }
+
+      res.json({ url: `/uploads/${file.filename}` });
+    });
   });
 
   // Admin: Sartaroshxonani o'chirish
