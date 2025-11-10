@@ -172,15 +172,15 @@ export class MemStorage implements IStorage {
     return this.barbershops.get(id);
   }
 
-    async createBarbershop(barbershop: InsertBarbershop): Promise<Barbershop> {
+  async createBarbershop(barbershop: InsertBarbershop): Promise<Barbershop> {
     const id = randomUUID();
-    const newShop: Barbershop = { 
-      ...barbershop, 
-      id, 
-      rating: barbershop.rating || 0, 
-        description: barbershop.description ?? null,
-        reviewCount: 0,
-      createdAt: new Date()
+    const newShop: Barbershop = {
+      ...barbershop,
+      id,
+      rating: barbershop.rating || 0,
+      description: barbershop.description ? barbershop.description : null,
+      reviewCount: 0,
+      createdAt: new Date(),
     };
     this.barbershops.set(id, newShop);
     return newShop;
@@ -189,7 +189,11 @@ export class MemStorage implements IStorage {
   async updateBarbershop(id: string, data: Partial<InsertBarbershop>): Promise<Barbershop | undefined> {
     const shop = this.barbershops.get(id);
     if (shop) {
-      const updated = { ...shop, ...data };
+      const updated = { ...shop, ...data } as Barbershop;
+      if ("description" in data) {
+        updated.description =
+          data.description && data.description !== "" ? (data.description as string) : null;
+      }
       this.barbershops.set(id, updated);
       return updated;
     }
@@ -325,15 +329,25 @@ export class DbStorage implements IStorage {
   async createBarbershop(barbershop: InsertBarbershop): Promise<Barbershop> {
     const result = await this.db
       .insert(barbershops)
-      .values(barbershop)
+      .values({
+        ...barbershop,
+        description: barbershop.description ?? null,
+      })
       .returning();
     return result[0];
   }
 
   async updateBarbershop(id: string, data: Partial<InsertBarbershop>): Promise<Barbershop | undefined> {
+    const updateData: Partial<InsertBarbershop> & { description?: string | null } = { ...data };
+    if (updateData.description === undefined) {
+      delete updateData.description;
+    } else if (updateData.description === "") {
+      updateData.description = null;
+    }
+
     const result = await this.db
       .update(barbershops)
-      .set(data)
+      .set(updateData)
       .where(eq(barbershops.id, id))
       .returning();
     return result[0];
