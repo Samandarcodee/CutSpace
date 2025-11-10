@@ -3,8 +3,9 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertBookingSchema, insertReviewSchema, insertBarbershopSchema, insertUserSchema } from "@shared/schema";
 import { sendTelegramNotification } from "./telegram.js";
-import { authenticateUser, requireAdmin, requireBarber, parseTelegramWebAppData } from "./auth";
+import { authenticateUser, requireAdmin, requireBarber } from "./auth";
 import type { User } from "@shared/schema";
+import { ZodError } from "zod";
 
 // Helper function: BigInt ni string ga o'zgartirish
 function serializeUser(user: User) {
@@ -12,6 +13,99 @@ function serializeUser(user: User) {
     ...user,
     telegramId: user.telegramId.toString(),
   };
+}
+
+function toStringArray(value: unknown): string[] | undefined {
+  if (value == null) {
+    return undefined;
+  }
+
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => (typeof item === "string" ? item : String(item)))
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0);
+  }
+
+  if (typeof value === "string") {
+    return value
+      .split(/\r?\n|,/)
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0);
+  }
+
+  return undefined;
+}
+
+function sanitizeBarbershopPayload(body: unknown) {
+  const source = (body && typeof body === "object" ? body : {}) as Record<string, unknown>;
+  const sanitized: Record<string, unknown> = {};
+
+  if (typeof source.name === "string") {
+    const trimmed = source.name.trim();
+    if (trimmed.length > 0) {
+      sanitized.name = trimmed;
+    }
+  } else if (source.name !== undefined) {
+    sanitized.name = source.name;
+  }
+
+  if (typeof source.address === "string") {
+    const trimmed = source.address.trim();
+    if (trimmed.length > 0) {
+      sanitized.address = trimmed;
+    }
+  } else if (source.address !== undefined) {
+    sanitized.address = source.address;
+  }
+
+  if (typeof source.phone === "string") {
+    const trimmed = source.phone.trim();
+    if (trimmed.length > 0) {
+      sanitized.phone = trimmed;
+    }
+  } else if (source.phone !== undefined) {
+    sanitized.phone = source.phone;
+  }
+
+  if (typeof source.description === "string") {
+    const trimmed = source.description.trim();
+    if (trimmed.length > 0) {
+      sanitized.description = trimmed;
+    }
+  } else if (source.description === null) {
+    sanitized.description = null;
+  }
+
+  const services = toStringArray(source.services);
+  if (services !== undefined) {
+    sanitized.services = services;
+  }
+
+  const images = toStringArray(source.images);
+  if (images !== undefined) {
+    sanitized.images = images;
+  }
+
+  if (
+    source.rating !== undefined &&
+    source.rating !== null &&
+    !(typeof source.rating === "string" && source.rating.trim() === "")
+  ) {
+    const numericRating = Number(source.rating);
+    sanitized.rating = Number.isNaN(numericRating) ? source.rating : numericRating;
+  }
+
+  if (typeof source.ownerId === "string") {
+    const trimmed = source.ownerId.trim();
+    if (trimmed.length > 0) {
+      sanitized.ownerId = trimmed;
+    }
+  } else if (source.ownerId === null) {
+    sanitized.ownerId = null;
+  }
+
+  return sanitized;
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -87,15 +181,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ==================== ADMIN ROUTES ====================
-  
+
   // Admin: Yangi sartaroshxona qo'shish
   app.post("/api/admin/barbershops", authenticateUser, requireAdmin, async (req, res) => {
     try {
-      const validatedData = insertBarbershopSchema.parse(req.body);
+      const payload = sanitizeBarbershopPayload(req.body);
+      const validatedData = insertBarbershopSchema.parse(payload);
       const barbershop = await storage.createBarbershop(validatedData);
       res.json(barbershop);
     } catch (error) {
       console.error("Create barbershop error:", error);
+      if (error instanceof ZodError) {
+        return res.status(400).json({
+          error: "Invalid barbershop data",
+          details: error.flatten(),
+        });
+      }
       res.status(400).json({ error: "Invalid barbershop data" });
     }
   });
@@ -103,13 +204,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin: Sartaroshxonani yangilash
   app.put("/api/admin/barbershops/:id", authenticateUser, requireAdmin, async (req, res) => {
     try {
-      const barbershop = await storage.updateBarbershop(req.params.id, req.body);
+      const payload = sanitizeBarbershopPayload(req.body);
+      const validatedData = insertBarbershopSchema.partial().parse(payload);
+      const barbershop = await storage.updateBarbershop(req.params.id, validatedData);
       if (!barbershop) {
         return res.status(404).json({ error: "Barbershop not found" });
       }
       res.json(barbershop);
     } catch (error) {
       console.error("Update barbershop error:", error);
+      if (error instanceof ZodError) {
+        return res.status(400).json({
+          error: "Invalid barbershop data",
+          details: error.flatten(),
+        });
+      }
       res.status(500).json({ error: "Failed to update barbershop" });
     }
   });
