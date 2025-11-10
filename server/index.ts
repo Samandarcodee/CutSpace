@@ -77,6 +77,7 @@ app.use((req, res, next) => {
         CREATE TABLE IF NOT EXISTS barbershops (
           id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid()::text,
           name TEXT NOT NULL,
+          description TEXT,
           rating REAL NOT NULL DEFAULT 0,
           address TEXT NOT NULL,
           phone TEXT NOT NULL,
@@ -117,10 +118,11 @@ app.use((req, res, next) => {
       
       // ALTER TABLE - eski jadvalga yangi ustunlar qo'shish
       try {
+        await sql`ALTER TABLE barbershops ADD COLUMN IF NOT EXISTS description TEXT`;
         await sql`ALTER TABLE barbershops ADD COLUMN IF NOT EXISTS phone TEXT`;
         await sql`ALTER TABLE barbershops ADD COLUMN IF NOT EXISTS owner_id VARCHAR REFERENCES users(id)`;
         await sql`ALTER TABLE barbershops ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()`;
-        console.log("✅ Barbershops table updated with phone, owner_id, created_at");
+        console.log("✅ Barbershops table updated with description, phone, owner_id, created_at");
       } catch (e) {
         console.log("ℹ️ Columns already exist or error:", (e as any)?.message);
       }

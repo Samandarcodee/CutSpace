@@ -218,6 +218,7 @@ export default function Admin() {
       services: servicesList, // Bo'sh qatorlar olib tashlangan
       images: imagesList, // Bo'sh qatorlar olib tashlangan
       rating: 0,
+      ownerId: backendUser?.id, // Current user ni owner qilish
     };
 
     if (editingShop) {
