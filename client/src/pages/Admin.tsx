@@ -46,10 +46,11 @@ export default function Admin() {
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
       const description =
-        typeof data.description === "string" ? data.description.trim() : data.description;
+        typeof data.description === "string" ? data.description.trim() : undefined;
+
       return await apiRequest("POST", "/api/admin/barbershops", {
         ...data,
-        description: description ? description : null,
+        description: description || undefined,
         services: data.services.split("\n").filter((s: string) => s.trim()),
         images: data.images.split("\n").filter((s: string) => s.trim()),
       });
@@ -72,10 +73,11 @@ export default function Admin() {
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
       const description =
-        typeof data.description === "string" ? data.description.trim() : data.description;
+        typeof data.description === "string" ? data.description.trim() : undefined;
+
       return await apiRequest("PUT", `/api/admin/barbershops/${id}`, {
         ...data,
-        description: description ? description : null,
+        description: description || undefined,
         services: data.services.split("\n").filter((s: string) => s.trim()),
         images: data.images.split("\n").filter((s: string) => s.trim()),
       });
