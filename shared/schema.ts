@@ -56,7 +56,9 @@ export const insertUserSchema = createInsertSchema(users).omit({
   createdAt: true,
 });
 
-export const insertBarbershopSchema = createInsertSchema(barbershops).omit({
+export const insertBarbershopSchema = createInsertSchema(barbershops, {
+  description: z.string().trim().nullish(),
+}).omit({
   id: true,
   reviewCount: true,
   createdAt: true,
