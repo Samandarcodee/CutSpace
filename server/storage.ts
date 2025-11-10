@@ -75,7 +75,6 @@ export class MemStorage implements IStorage {
     const shop1: Barbershop = {
       id: "1",
       name: "Premium Barber Shop",
-      description: "Premium darajadagi xizmatlar va zamonaviy interyerga ega barbershop.",
       rating: 4.8,
       address: "Amir Temur ko'chasi 15, Yunusobod tumani",
       phone: "+998 90 123 45 67",
@@ -89,7 +88,6 @@ export class MemStorage implements IStorage {
     const shop2: Barbershop = {
       id: "2",
       name: "Classic Barber",
-      description: "Klassik uslubdagi erkaklar salonida tajribali ustalar xizmat ko'rsatadi.",
       rating: 4.6,
       address: "Mustaqillik ko'chasi 42, Mirobod tumani",
       phone: "+998 90 234 56 78",
@@ -103,7 +101,6 @@ export class MemStorage implements IStorage {
     const shop3: Barbershop = {
       id: "3",
       name: "Modern Style Barber",
-      description: "Moda yo'nalishidagi soch turmaklari va premium xizmatlar markazi.",
       rating: 4.9,
       address: "Buyuk Ipak Yo'li 88, Shayxontohur tumani",
       phone: "+998 90 345 67 89",
@@ -187,7 +184,6 @@ export class MemStorage implements IStorage {
       ...barbershop,
       id,
       rating: barbershop.rating || 0,
-      description: barbershop.description ? barbershop.description : null,
       ownerId: barbershop.ownerId ?? null,
       reviewCount: 0,
       createdAt: new Date(),
@@ -200,10 +196,6 @@ export class MemStorage implements IStorage {
     const shop = this.barbershops.get(id);
     if (shop) {
       const updated = { ...shop, ...data } as Barbershop;
-      if ("description" in data) {
-        updated.description =
-          data.description && data.description !== "" ? (data.description as string) : null;
-      }
       if ("ownerId" in data) {
         updated.ownerId = data.ownerId ?? null;
       }
@@ -342,21 +334,13 @@ export class DbStorage implements IStorage {
   async createBarbershop(barbershop: InsertBarbershop): Promise<Barbershop> {
     const result = await this.db
       .insert(barbershops)
-      .values({
-        ...barbershop,
-        description: barbershop.description ?? null,
-      })
+      .values(barbershop)
       .returning();
     return result[0];
   }
 
   async updateBarbershop(id: string, data: Partial<InsertBarbershop>): Promise<Barbershop | undefined> {
-    const updateData: Partial<InsertBarbershop> & { description?: string | null } = { ...data };
-    if (updateData.description === undefined) {
-      delete updateData.description;
-    } else if (updateData.description === "") {
-      updateData.description = null;
-    }
+    const updateData: Partial<InsertBarbershop> = { ...data };
 
     const result = await this.db
       .update(barbershops)

@@ -35,7 +35,6 @@ async function migrate() {
         CREATE TABLE IF NOT EXISTS barbershops (
           id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid()::text,
           name TEXT NOT NULL,
-          description TEXT,
           rating REAL NOT NULL DEFAULT 0,
           address TEXT NOT NULL,
           phone TEXT NOT NULL,

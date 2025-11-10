@@ -45,7 +45,6 @@ async function seed() {
       .values([
         {
           name: "Premium Barber Shop",
-          description: "Premium darajadagi xizmatlar va zamonaviy interyerga ega barbershop.",
           rating: 4.8,
           address: "Amir Temur ko'chasi 15, Yunusobod tumani",
           phone: "+998 90 123 45 67",
@@ -55,7 +54,6 @@ async function seed() {
         },
         {
           name: "Classic Barber",
-          description: "Klassik uslubdagi erkaklar salonida tajribali ustalar xizmat ko'rsatadi.",
           rating: 4.6,
           address: "Mustaqillik ko'chasi 42, Mirobod tumani",
           phone: "+998 90 234 56 78",
@@ -65,7 +63,6 @@ async function seed() {
         },
         {
           name: "Modern Style Barber",
-          description: "Moda yo'nalishidagi soch turmaklari va premium xizmatlar markazi.",
           rating: 4.9,
           address: "Buyuk Ipak Yo'li 88, Shayxontohur tumani",
           phone: "+998 90 345 67 89",
