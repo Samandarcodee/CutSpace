@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useTelegram } from "@/contexts/TelegramContext";
@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Edit, Plus, Shield, MapPin } from "lucide-react";
+import { Trash2, Edit, Plus, Shield, MapPin, Upload, X, Image as ImageIcon } from "lucide-react";
 import type { Barbershop } from "@shared/schema";
 
 export default function Admin() {
@@ -25,6 +25,9 @@ export default function Admin() {
     services: "",
     images: "",
   });
+  const [imageFiles, setImageFiles] = useState<string[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: barbershops = [], isLoading } = useQuery<Barbershop[]>({
     queryKey: ["/api/barbershops"],
@@ -123,7 +126,77 @@ export default function Admin() {
       services: "",
       images: "",
     });
+    setImageFiles([]);
     setEditingShop(null);
+  };
+
+  // Fayl yuklash funksiyasi
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+    const newImages: string[] = [];
+
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        // Faqat rasm fayllarini qabul qilish
+        if (!file.type.startsWith('image/')) {
+          toast({
+            title: "Noto'g'ri fayl turi",
+            description: `${file.name} rasm fayli emas`,
+            variant: "destructive",
+          });
+          continue;
+        }
+
+        // Fayl hajmini tekshirish (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          toast({
+            title: "Fayl juda katta",
+            description: `${file.name} hajmi 5MB dan katta`,
+            variant: "destructive",
+          });
+          continue;
+        }
+
+        // Rasmni base64 ga o'tkazish
+        const reader = new FileReader();
+        const base64 = await new Promise<string>((resolve, reject) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+
+        newImages.push(base64);
+      }
+
+      setImageFiles([...imageFiles, ...newImages]);
+      toast({
+        title: "Rasmlar yuklandi",
+        description: `${newImages.length} ta rasm muvaffaqiyatli yuklandi`,
+      });
+    } catch (error) {
+      console.error('Image upload error:', error);
+      toast({
+        title: "Xatolik",
+        description: "Rasmlarni yuklashda xatolik yuz berdi",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+      // Input ni tozalash (bir xil faylni qayta yuklash mumkin bo'lishi uchun)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  // Rasmni o'chirish
+  const removeImage = (index: number) => {
+    setImageFiles(imageFiles.filter((_, i) => i !== index));
   };
 
   const handleEdit = (shop: Barbershop) => {
@@ -136,6 +209,8 @@ export default function Admin() {
       services: shop.services.join("\n"),
       images: shop.images.join("\n"),
     });
+    // Mavjud rasmlarni yuklanganlar sifatida ko'rsatish
+    setImageFiles(shop.images);
     setShowDialog(true);
   };
 
@@ -147,10 +222,13 @@ export default function Admin() {
       .split("\n")
       .map((service) => service.trim())
       .filter(Boolean);
-    const imagesList = formData.images
+    
+    // Yuklangan rasmlar va URL rasmlarni birlashtirish
+    const manualImages = formData.images
       .split("\n")
       .map((image) => image.trim())
       .filter(Boolean);
+    const allImages = [...imageFiles, ...manualImages];
 
     if (!trimmedName || !trimmedAddress || !trimmedPhone) {
       toast({
@@ -170,10 +248,10 @@ export default function Admin() {
       return;
     }
 
-    if (imagesList.length === 0) {
+    if (allImages.length === 0) {
       toast({
-        title: "Rasm havolalari kiritilmagan",
-        description: "Kamida bitta rasm manzilini kiriting.",
+        title: "Rasmlar kiritilmagan",
+        description: "Kamida bitta rasm yuklang yoki URL kiriting.",
         variant: "destructive",
       });
       return;
@@ -186,7 +264,7 @@ export default function Admin() {
       phone: trimmedPhone,
       description: formData.description.trim(),
       services: servicesList.join("\n"),
-      images: imagesList.join("\n"),
+      images: allImages.join("\n"),
     };
 
     if (editingShop) {
@@ -361,14 +439,83 @@ export default function Admin() {
                   rows={4}
                 />
               </div>
-              <div>
-                <label className="text-sm font-medium">Rasmlar (har birini yangi qatorda)</label>
-                <Textarea
-                  value={formData.images}
-                  onChange={(e) => setFormData({ ...formData, images: e.target.value })}
-                  placeholder="/images/luxury.png&#10;/images/barber-work.png"
-                  rows={3}
-                />
+              <div className="space-y-3">
+                <label className="text-sm font-medium">Rasmlar</label>
+                
+                {/* Fayl yuklash tugmasi */}
+                <div className="space-y-2">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                    className="w-full"
+                  >
+                    {isUploading ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                        Yuklanmoqda...
+                      </div>
+                    ) : (
+                      <>
+                        <Upload className="w-4 h-4 mr-2" />
+                        Rasm yuklash (Fayl yoki Galeriyadan)
+                      </>
+                    )}
+                  </Button>
+                  <p className="text-xs text-muted-foreground">
+                    Bir nechta rasmni tanlang. Max: 5MB har biri
+                  </p>
+                </div>
+
+                {/* Yuklangan rasmlarni ko'rsatish */}
+                {imageFiles.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground">
+                      Yuklangan rasmlar ({imageFiles.length}):
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {imageFiles.map((img, idx) => (
+                        <div key={idx} className="relative group">
+                          <img
+                            src={img}
+                            alt={`Preview ${idx + 1}`}
+                            className="w-full h-24 object-cover rounded-md border"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(idx)}
+                            className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* URL orqali rasm qo'shish (ixtiyoriy) */}
+                <div className="pt-2 border-t">
+                  <label className="text-xs text-muted-foreground mb-2 block">
+                    Yoki URL orqali qo'shing (ixtiyoriy):
+                  </label>
+                  <Textarea
+                    value={formData.images}
+                    onChange={(e) => setFormData({ ...formData, images: e.target.value })}
+                    placeholder="https://example.com/image.jpg"
+                    rows={2}
+                    className="text-xs"
+                  />
+                </div>
               </div>
               <div className="flex gap-2">
                 <Button
