@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertBookingSchema, insertReviewSchema, insertBarbershopSchema, insertUserSchema } from "@shared/schema";
+import { z } from "zod";
 import { sendTelegramNotification } from "./telegram.js";
 import { authenticateUser, requireAdmin, requireBarber, parseTelegramWebAppData } from "./auth";
 import type { User } from "@shared/schema";
@@ -13,6 +14,101 @@ function serializeUser(user: User) {
     telegramId: user.telegramId.toString(),
   };
 }
+
+const normalizeStringArray = (value: unknown): string[] => {
+  if (Array.isArray(value)) {
+    return value
+      .filter((item): item is string => typeof item === "string")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  if (typeof value === "string") {
+    return value
+      .split(/[\n,]/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+};
+
+const normalizeOptionalString = (value: unknown): string | undefined => {
+  if (value === null || value === undefined) {
+    return undefined;
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  }
+
+  return undefined;
+};
+
+const normalizeRequiredString = (value: unknown): string | undefined => {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  }
+
+  return undefined;
+};
+
+const normalizeRating = (value: unknown): number | undefined => {
+  if (value === null || value === undefined || value === "") {
+    return undefined;
+  }
+
+  const parsed = typeof value === "number" ? value : Number(value);
+
+  if (Number.isFinite(parsed)) {
+    return parsed;
+  }
+
+  return undefined;
+};
+
+const barbershopRequestSchema = insertBarbershopSchema.extend({
+  name: z
+    .string({ required_error: "Name is required" })
+    .trim()
+    .min(1, "Name is required"),
+  address: z
+    .string({ required_error: "Address is required" })
+    .trim()
+    .min(1, "Address is required"),
+  phone: z
+    .string({ required_error: "Phone is required" })
+    .trim()
+    .min(1, "Phone is required"),
+  description: z
+    .string()
+    .trim()
+    .transform((val) => (val.length > 0 ? val : undefined))
+    .optional(),
+  services: z
+    .array(z.string().trim().min(1, "Service name cannot be empty"), {
+      invalid_type_error: "Services must be an array of strings",
+    })
+    .min(1, "At least one service is required"),
+  images: z
+    .array(z.string().trim().min(1, "Image URL cannot be empty"), {
+      invalid_type_error: "Images must be an array of strings",
+    })
+    .min(1, "At least one image is required"),
+  rating: z
+    .number()
+    .min(0, "Rating cannot be negative")
+    .max(5, "Rating must be 5 or less")
+    .optional(),
+  ownerId: z
+    .string()
+    .trim()
+    .min(1, "Owner id cannot be empty")
+    .optional()
+    .nullable(),
+});
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // ==================== AUTH ROUTES ====================
@@ -86,19 +182,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ user: serializeUser(user) });
   });
 
-  // ==================== ADMIN ROUTES ====================
-  
-  // Admin: Yangi sartaroshxona qo'shish
-  app.post("/api/admin/barbershops", authenticateUser, requireAdmin, async (req, res) => {
-    try {
-      const validatedData = insertBarbershopSchema.parse(req.body);
-      const barbershop = await storage.createBarbershop(validatedData);
-      res.json(barbershop);
-    } catch (error) {
-      console.error("Create barbershop error:", error);
-      res.status(400).json({ error: "Invalid barbershop data" });
-    }
-  });
+    // ==================== ADMIN ROUTES ====================
+    
+    // Admin: Yangi sartaroshxona qo'shish
+    app.post("/api/admin/barbershops", authenticateUser, requireAdmin, async (req, res) => {
+      const contentType = req.headers["content-type"] || "unknown";
+      console.log("📥 Incoming barbershop payload Content-Type:", contentType);
+      console.log("📥 Incoming barbershop payload body:", req.body);
+
+      if (!req.is("application/json")) {
+        return res.status(415).json({
+          error: "Unsupported Content-Type",
+          details: `Expected application/json but received ${contentType}`,
+        });
+      }
+
+      try {
+        const normalizedPayload = {
+          name: normalizeRequiredString((req.body as any)?.name),
+          description: normalizeOptionalString((req.body as any)?.description),
+          address: normalizeRequiredString((req.body as any)?.address),
+          phone: normalizeRequiredString((req.body as any)?.phone),
+          services: normalizeStringArray((req.body as any)?.services),
+          images: normalizeStringArray((req.body as any)?.images),
+          ownerId: normalizeOptionalString((req.body as any)?.ownerId) ?? null,
+          rating: normalizeRating((req.body as any)?.rating),
+        };
+
+        const validationResult = barbershopRequestSchema.safeParse(normalizedPayload);
+
+        if (!validationResult.success) {
+          const formattedErrors = validationResult.error.issues.map((issue) => ({
+            path: issue.path.join(".") || undefined,
+            message: issue.message,
+          }));
+
+          console.error("❌ Create barbershop validation error:", formattedErrors);
+
+          return res.status(400).json({
+            error: "Invalid barbershop data",
+            details: formattedErrors,
+          });
+        }
+
+        const dataToSave = {
+          ...validationResult.data,
+          rating: validationResult.data.rating ?? 0,
+        };
+
+        const barbershop = await storage.createBarbershop(dataToSave);
+        return res.status(201).json(barbershop);
+      } catch (error) {
+        console.error("Create barbershop error:", error);
+        return res.status(500).json({ error: "Failed to create barbershop" });
+      }
+    });
 
   // Admin: Sartaroshxonani yangilash
   app.put("/api/admin/barbershops/:id", authenticateUser, requireAdmin, async (req, res) => {
