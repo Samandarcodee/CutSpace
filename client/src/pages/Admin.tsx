@@ -45,18 +45,27 @@ export default function Admin() {
 
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
-      const description =
-        typeof data.description === "string" ? data.description.trim() : undefined;
+      // Bo'sh qatorlarni olib tashlash
+      const processArray = (arr: any) => {
+        if (Array.isArray(arr)) {
+          return arr.filter((item) => item && item.trim().length > 0);
+        }
+        if (typeof arr === "string") {
+          return arr.split("\n")
+            .map((item) => item.trim())
+            .filter((item) => item.length > 0);
+        }
+        return [];
+      };
 
-      // Services va images allaqachon array sifatida kelib qoladi
       return await apiRequest("POST", "/api/admin/barbershops", {
         name: data.name,
-        description: description || undefined,
+        description: data.description || undefined,
         address: data.address,
         phone: data.phone,
         rating: data.rating || 0,
-        services: Array.isArray(data.services) ? data.services : data.services.split("\n").filter((s: string) => s.trim()),
-        images: Array.isArray(data.images) ? data.images : data.images.split("\n").filter((s: string) => s.trim()),
+        services: processArray(data.services),
+        images: processArray(data.images),
         ownerId: data.ownerId || undefined,
       });
     },
@@ -77,18 +86,27 @@ export default function Admin() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
-      const description =
-        typeof data.description === "string" ? data.description.trim() : undefined;
+      // Bo'sh qatorlarni olib tashlash
+      const processArray = (arr: any) => {
+        if (Array.isArray(arr)) {
+          return arr.filter((item) => item && item.trim().length > 0);
+        }
+        if (typeof arr === "string") {
+          return arr.split("\n")
+            .map((item) => item.trim())
+            .filter((item) => item.length > 0);
+        }
+        return [];
+      };
 
-      // Services va images allaqachon array sifatida kelib qoladi
       return await apiRequest("PUT", `/api/admin/barbershops/${id}`, {
         name: data.name,
-        description: description || undefined,
+        description: data.description || undefined,
         address: data.address,
         phone: data.phone,
         rating: data.rating,
-        services: Array.isArray(data.services) ? data.services : data.services.split("\n").filter((s: string) => s.trim()),
-        images: Array.isArray(data.images) ? data.images : data.images.split("\n").filter((s: string) => s.trim()),
+        services: processArray(data.services),
+        images: processArray(data.images),
         ownerId: data.ownerId,
       });
     },
@@ -153,14 +171,17 @@ export default function Admin() {
     const trimmedName = formData.name.trim();
     const trimmedAddress = formData.address.trim();
     const trimmedPhone = formData.phone.trim();
+    
+    // Bo'sh qatorlarni o'tkazib yuborish - faqat to'ldirilganlarni olish
     const servicesList = formData.services
       .split("\n")
       .map((service) => service.trim())
-      .filter(Boolean);
+      .filter((service) => service.length > 0); // Bo'sh stringlarni olib tashlash
+    
     const imagesList = formData.images
       .split("\n")
       .map((image) => image.trim())
-      .filter(Boolean);
+      .filter((image) => image.length > 0); // Bo'sh stringlarni olib tashlash
 
     if (!trimmedName || !trimmedAddress || !trimmedPhone) {
       toast({
@@ -174,7 +195,7 @@ export default function Admin() {
     if (servicesList.length === 0) {
       toast({
         title: "Xizmatlar kiritilmagan",
-        description: "Kamida bitta xizmatni kiriting.",
+        description: "Kamida bitta xizmatni kiriting (bo'sh qatorlar hisobga olinmaydi).",
         variant: "destructive",
       });
       return;
@@ -183,7 +204,7 @@ export default function Admin() {
     if (imagesList.length === 0) {
       toast({
         title: "Rasm havolalari kiritilmagan",
-        description: "Kamida bitta rasm manzilini kiriting.",
+        description: "Kamida bitta rasm manzilini kiriting (bo'sh qatorlar hisobga olinmaydi).",
         variant: "destructive",
       });
       return;
@@ -193,9 +214,9 @@ export default function Admin() {
       name: trimmedName,
       address: trimmedAddress,
       phone: trimmedPhone,
-      description: formData.description.trim(),
-      services: servicesList, // Array sifatida yuborish
-      images: imagesList, // Array sifatida yuborish
+      description: formData.description.trim() || undefined,
+      services: servicesList, // Bo'sh qatorlar olib tashlangan
+      images: imagesList, // Bo'sh qatorlar olib tashlangan
       rating: 0,
     };
 
@@ -367,18 +388,24 @@ export default function Admin() {
                 <Textarea
                   value={formData.services}
                   onChange={(e) => setFormData({ ...formData, services: e.target.value })}
-                  placeholder="Soch olish - 50,000 so'm&#10;Soqol qirish - 30,000 so'm"
-                  rows={4}
+                  placeholder="Soch olish - 50,000 so'm&#10;Soqol qirish - 30,000 so'm&#10;&#10;(Bo'sh qatorlar avtomatik olib tashlanadi)"
+                  rows={5}
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Bo'sh qatorlar e'tiborga olinmaydi
+                </p>
               </div>
               <div>
                 <label className="text-sm font-medium">Rasmlar (har birini yangi qatorda)</label>
                 <Textarea
                   value={formData.images}
                   onChange={(e) => setFormData({ ...formData, images: e.target.value })}
-                  placeholder="/images/luxury.png&#10;/images/barber-work.png"
-                  rows={3}
+                  placeholder="/images/luxury.png&#10;/images/barber-work.png&#10;&#10;(Bo'sh qatorlar avtomatik olib tashlanadi)"
+                  rows={4}
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Bo'sh qatorlar e'tiborga olinmaydi
+                </p>
               </div>
               <div className="flex gap-2">
                 <Button
