@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -16,7 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Edit, Plus, Shield, MapPin } from "lucide-react";
+import { Trash2, Edit, Plus, Shield, MapPin, Upload, X } from "lucide-react";
 import type { Barbershop } from "@shared/schema";
 
 export default function Admin() {
@@ -24,8 +22,10 @@ export default function Admin() {
   const { toast } = useToast();
   const [showDialog, setShowDialog] = useState(false);
   const [editingShop, setEditingShop] = useState<Barbershop | null>(null);
+  const [uploadingImages, setUploadingImages] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     name: "",
+    description: "",
     address: "",
     phone: "",
     services: "",
@@ -50,6 +50,54 @@ export default function Admin() {
       </div>
     );
   }
+
+  // Rasm yuklash funksiyasi
+  const handleImageUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+
+    const formDataUpload = new FormData();
+    
+    for (let i = 0; i < files.length; i++) {
+      formDataUpload.append('image', files[i]);
+      
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/upload/barber-image`, {
+          method: 'POST',
+          body: formDataUpload,
+        });
+
+        if (!response.ok) throw new Error('Yuklashda xatolik');
+
+        const data = await response.json();
+        const imageUrl = data.imageUrl;
+
+        setUploadingImages(prev => [...prev, imageUrl]);
+        
+        // Mavjud rasmlar ro'yxatiga qo'shish
+        setFormData(prev => ({
+          ...prev,
+          images: prev.images 
+            ? `${prev.images}\n${imageUrl}` 
+            : imageUrl
+        }));
+
+        toast({ title: "Rasm yuklandi! ✅" });
+      } catch (error: any) {
+        toast({
+          title: "Xatolik",
+          description: error.message || "Rasm yuklashda muammo",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  // Rasmni o'chirish
+  const removeImage = (imageUrl: string) => {
+    const images = formData.images.split('\n').filter(img => img.trim() && img !== imageUrl);
+    setFormData({ ...formData, images: images.join('\n') });
+    setUploadingImages(prev => prev.filter(img => img !== imageUrl));
+  };
 
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -117,23 +165,27 @@ export default function Admin() {
   const resetForm = () => {
     setFormData({
       name: "",
+      description: "",
       address: "",
       phone: "",
       services: "",
       images: "",
     });
     setEditingShop(null);
+    setUploadingImages([]);
   };
 
   const handleEdit = (shop: Barbershop) => {
     setEditingShop(shop);
     setFormData({
       name: shop.name,
+      description: shop.description || "",
       address: shop.address,
       phone: shop.phone || "",
       services: shop.services.join("\n"),
       images: shop.images.join("\n"),
     });
+    setUploadingImages(shop.images);
     setShowDialog(true);
   };
 
@@ -265,7 +317,7 @@ export default function Admin() {
           ))}
 
           {barbershops.length === 0 && (
-            <Card className="p-6 text-center">
+            <Card className="p-6 text-center col-span-full">
               <p className="text-muted-foreground">
                 Hozircha sartaroshxona yo'q
               </p>
@@ -284,10 +336,7 @@ export default function Admin() {
             </DialogHeader>
             <div className="space-y-4 mt-4">
               <div>
-                <label className="text-sm font-medium">Nomi</label>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Sartaroshxona nomini kiriting, masalan, "Premium Barber Shop".
-                </p>
+                <label className="text-sm font-medium">Nomi *</label>
                 <Input
                   value={formData.name}
                   onChange={(e) =>
@@ -297,8 +346,21 @@ export default function Admin() {
                   className="mt-2"
                 />
               </div>
+              
               <div>
-                <label className="text-sm font-medium">Manzil</label>
+                <label className="text-sm font-medium">Tavsif</label>
+                <Textarea
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
+                  placeholder="Professional sartaroshlar, zamonaviy xizmat..."
+                  rows={3}
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">Manzil *</label>
                 <Input
                   value={formData.address}
                   onChange={(e) =>
@@ -307,6 +369,7 @@ export default function Admin() {
                   placeholder="Amir Temur ko'chasi 15"
                 />
               </div>
+
               <div>
                 <label className="text-sm font-medium">Telefon</label>
                 <Input
@@ -317,6 +380,7 @@ export default function Admin() {
                   placeholder="+998 90 123 45 67"
                 />
               </div>
+
               <div>
                 <label className="text-sm font-medium">
                   Xizmatlar (har birini yangi qatorda)
@@ -330,20 +394,75 @@ export default function Admin() {
                   rows={4}
                 />
               </div>
+
               <div>
-                <label className="text-sm font-medium">
-                  Rasmlar (har birini yangi qatorda)
+                <label className="text-sm font-medium block mb-2">
+                  Rasmlar
                 </label>
-                <Textarea
-                  value={formData.images}
-                  onChange={(e) =>
-                    setFormData({ ...formData, images: e.target.value })
-                  }
-                  placeholder="/images/luxury.png&#10;/images/barber-work.png"
-                  rows={3}
-                />
+                
+                {/* File Upload Button */}
+                <div className="border-2 border-dashed border-border rounded-lg p-4 text-center hover:border-primary transition-colors">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={(e) => handleImageUpload(e.target.files)}
+                    className="hidden"
+                    id="image-upload"
+                  />
+                  <label 
+                    htmlFor="image-upload"
+                    className="cursor-pointer flex flex-col items-center gap-2"
+                  >
+                    <Upload className="w-8 h-8 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">
+                      Rasm yuklash uchun bosing
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      PNG, JPG, WEBP (maks. 5MB)
+                    </span>
+                  </label>
+                </div>
+
+                {/* Yuklangan rasmlar */}
+                {uploadingImages.length > 0 && (
+                  <div className="mt-3 grid grid-cols-3 gap-2">
+                    {uploadingImages.map((img, idx) => (
+                      <div key={idx} className="relative group">
+                        <img 
+                          src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${img}`}
+                          alt={`Preview ${idx + 1}`}
+                          className="w-full h-20 object-cover rounded border"
+                        />
+                        <button
+                          onClick={() => removeImage(img)}
+                          className="absolute top-1 right-1 bg-destructive text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Manual URL input (optional) */}
+                <details className="mt-3">
+                  <summary className="text-xs text-muted-foreground cursor-pointer">
+                    Yoki URL orqali qo'shish
+                  </summary>
+                  <Textarea
+                    value={formData.images}
+                    onChange={(e) =>
+                      setFormData({ ...formData, images: e.target.value })
+                    }
+                    placeholder="/uploads/image1.jpg&#10;/uploads/image2.jpg"
+                    rows={2}
+                    className="mt-2"
+                  />
+                </details>
               </div>
-              <div className="flex gap-2">
+
+              <div className="flex gap-2 pt-4">
                 <Button
                   onClick={handleSubmit}
                   disabled={
@@ -370,4 +489,3 @@ export default function Admin() {
     </div>
   );
 }
->>>>>>> Incoming (Background Agent changes)
