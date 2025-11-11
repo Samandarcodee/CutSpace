@@ -339,22 +339,41 @@ VIP xizmat - 100,000 so'm"></textarea>
                 formData.append('image', file);
 
                 try {
+                    console.log('📤 Uploading:', file.name, 'to', `${API}/upload/barber-image`);
+                    
                     const response = await fetch(`${API}/upload/barber-image`, {
                         method: 'POST',
                         body: formData
                     });
 
+                    console.log('📥 Response status:', response.status, response.statusText);
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error('❌ Server error:', errorText);
+                        let errorData;
+                        try {
+                            errorData = JSON.parse(errorText);
+                        } catch {
+                            errorData = { error: errorText || `Server error: ${response.status}` };
+                        }
+                        showMessage('❌ Xatolik: ' + (errorData.error || 'Server xatolik'), 'error');
+                        continue;
+                    }
+
                     const data = await response.json();
+                    console.log('✅ Upload success:', data);
+                    
                     if (data.success) {
                         uploadedImages.push(data.imageUrl);
                         updateImagePreview();
                         showMessage(`✅ ${file.name} yuklandi!`, 'success');
                     } else {
-                        showMessage('❌ Xatolik: ' + data.error, 'error');
+                        showMessage('❌ Xatolik: ' + (data.error || 'Noma\'lum xato'), 'error');
                     }
                 } catch (err) {
-                    showMessage('❌ Yuklashda xatolik: ' + file.name, 'error');
-                    console.error(err);
+                    console.error('❌ Fetch error:', err);
+                    showMessage('❌ Yuklashda xatolik: ' + file.name + ' - ' + err.message, 'error');
                 }
             }
 

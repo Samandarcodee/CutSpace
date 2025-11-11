@@ -39,7 +39,13 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+// CORS configuration
+app.use(cors({
+  origin: '*', // Allow all origins for now
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
 app.use(express.json());
 
 // Multer configuration for image upload
@@ -361,12 +367,26 @@ app.get('/api/reviews/barber/:barber_id', (req, res) => {
 // Upload barber image
 app.post('/api/upload/barber-image', upload.single('image'), (req, res) => {
   try {
+    console.log('📥 Upload request received');
+    console.log('📦 Request body:', req.body);
+    console.log('📁 Request file:', req.file ? {
+      fieldname: req.file.fieldname,
+      originalname: req.file.originalname,
+      filename: req.file.filename,
+      size: req.file.size
+    } : 'No file');
+    
     if (!req.file) {
-      return res.status(400).json({ error: 'Fayl yuklanmadi' });
+      console.error('❌ No file in request');
+      return res.status(400).json({ 
+        success: false,
+        error: 'Fayl yuklanmadi. Iltimos, rasm faylini tanlang.' 
+      });
     }
     
     const imageUrl = `/uploads/${req.file.filename}`;
-    console.log('✅ Image uploaded:', imageUrl);
+    console.log('✅ Image uploaded successfully:', imageUrl);
+    
     res.json({ 
       success: true, 
       imageUrl: imageUrl,
@@ -374,21 +394,38 @@ app.post('/api/upload/barber-image', upload.single('image'), (req, res) => {
     });
   } catch (error) {
     console.error('❌ Upload error:', error);
-    res.status(500).json({ error: error.message || 'Rasm yuklashda xatolik' });
+    res.status(500).json({ 
+      success: false,
+      error: error.message || 'Rasm yuklashda xatolik' 
+    });
   }
 });
 
-// Error handler for multer errors
+// Error handler for multer errors (must be after routes)
 app.use((error, req, res, next) => {
+  console.error('❌ Error handler:', error);
+  
   if (error instanceof multer.MulterError) {
+    console.error('❌ Multer error:', error.code, error.message);
     if (error.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({ error: 'Fayl hajmi 5MB dan kichik bo\'lishi kerak' });
+      return res.status(400).json({ 
+        success: false,
+        error: 'Fayl hajmi 5MB dan kichik bo\'lishi kerak' 
+      });
     }
-    return res.status(400).json({ error: error.message });
+    return res.status(400).json({ 
+      success: false,
+      error: error.message || 'Fayl yuklashda xatolik' 
+    });
   }
+  
   if (error) {
-    return res.status(400).json({ error: error.message });
+    return res.status(400).json({ 
+      success: false,
+      error: error.message || 'Noma\'lum xatolik' 
+    });
   }
+  
   next();
 });
 
