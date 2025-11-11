@@ -39,36 +39,42 @@ async function seed() {
     console.log("✅ Updated user to admin (ID: 5928372261)");
   }
 
-  // Insert barbershops
-  const insertedShops = await db
-    .insert(barbershops)
-    .values([
-      {
-        name: "Premium Barber Shop",
-        rating: 4.8,
-        address: "Amir Temur ko'chasi 15, Yunusobod tumani",
-        services: ["Soch olish - 50,000 so'm", "Soqol qirish - 30,000 so'm", "Styling - 40,000 so'm"],
-        images: ["/images/luxury.png", "/images/barber-work.png"],
-        reviewCount: 3,
-      },
-      {
-        name: "Classic Barber",
-        rating: 4.6,
-        address: "Mustaqillik ko'chasi 42, Mirobod tumani",
-        services: ["Soch olish - 45,000 so'm", "Soqol qirish - 25,000 so'm"],
-        images: ["/images/classic.png", "/images/modern-exterior.png"],
-        reviewCount: 3,
-      },
-      {
-        name: "Modern Style Barber",
-        rating: 4.9,
-        address: "Buyuk Ipak Yo'li 88, Shayxontohur tumani",
-        services: ["Soch olish - 60,000 so'm", "Soqol qirish - 35,000 so'm", "Styling - 50,000 so'm"],
-        images: ["/images/minimalist.png", "/images/tools.png"],
-        reviewCount: 3,
-      },
-    ])
-    .returning();
+    // Insert barbershops
+    const insertedShops = await db
+      .insert(barbershops)
+      .values([
+        {
+          name: "Premium Barber Shop",
+          description: "Premium darajadagi xizmatlar va zamonaviy interyerga ega barbershop.",
+          rating: 4.8,
+          address: "Amir Temur ko'chasi 15, Yunusobod tumani",
+          phone: "+998 90 123 45 67",
+          services: ["Soch olish - 50,000 so'm", "Soqol qirish - 30,000 so'm", "Styling - 40,000 so'm"],
+          images: ["/images/luxury.png", "/images/barber-work.png"],
+          reviewCount: 3,
+        },
+        {
+          name: "Classic Barber",
+          description: "Klassik uslubdagi erkaklar salonida tajribali ustalar xizmat ko'rsatadi.",
+          rating: 4.6,
+          address: "Mustaqillik ko'chasi 42, Mirobod tumani",
+          phone: "+998 90 234 56 78",
+          services: ["Soch olish - 45,000 so'm", "Soqol qirish - 25,000 so'm"],
+          images: ["/images/classic.png", "/images/modern-exterior.png"],
+          reviewCount: 3,
+        },
+        {
+          name: "Modern Style Barber",
+          description: "Moda yo'nalishidagi soch turmaklari va premium xizmatlar markazi.",
+          rating: 4.9,
+          address: "Buyuk Ipak Yo'li 88, Shayxontohur tumani",
+          phone: "+998 90 345 67 89",
+          services: ["Soch olish - 60,000 so'm", "Soqol qirish - 35,000 so'm", "Styling - 50,000 so'm"],
+          images: ["/images/minimalist.png", "/images/tools.png"],
+          reviewCount: 3,
+        },
+      ])
+      .returning();
 
   console.log(`✅ Added ${insertedShops.length} barbershops`);
 

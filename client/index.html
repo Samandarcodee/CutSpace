@@ -7,6 +7,34 @@
     <title>Sartaroshxona - Toshkent</title>
     <meta name="description" content="Toshkent shahridagi eng yaxshi sartaroshxonalarga onlayn yoziling. Qulay vaqtda soch olish va soqol qirish xizmatlari." />
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+      <script>
+        (function() {
+          try {
+            var storageKey = "app-theme";
+            var stored = localStorage.getItem(storageKey);
+            var theme = (stored === "dark" || stored === "light") ? stored : null;
+
+            if (!theme && window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.colorScheme) {
+              var scheme = window.Telegram.WebApp.colorScheme;
+              if (scheme === "dark" || scheme === "light") {
+                theme = scheme;
+              }
+            }
+
+            if (!theme) {
+              var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+              theme = prefersDark ? "dark" : "light";
+            }
+
+            var root = document.documentElement;
+            root.classList.remove("light", "dark");
+            root.classList.add(theme);
+            root.style.colorScheme = theme;
+          } catch (error) {
+            console.error("Failed to set initial theme", error);
+          }
+        })();
+      </script>
   </head>
   <body>
     <div id="root"></div>

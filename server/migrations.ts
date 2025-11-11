@@ -32,18 +32,19 @@ async function migrate() {
 
     // Create barbershops table
     await sql`
-      CREATE TABLE IF NOT EXISTS barbershops (
-        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid()::text,
-        name TEXT NOT NULL,
-        rating REAL NOT NULL DEFAULT 0,
-        address TEXT NOT NULL,
-        phone TEXT NOT NULL,
-        services TEXT[] NOT NULL,
-        images TEXT[] NOT NULL,
-        review_count INTEGER NOT NULL DEFAULT 0,
-        owner_id VARCHAR REFERENCES users(id),
-        created_at TIMESTAMP DEFAULT NOW()
-      )
+        CREATE TABLE IF NOT EXISTS barbershops (
+          id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid()::text,
+          name TEXT NOT NULL,
+          description TEXT,
+          rating REAL NOT NULL DEFAULT 0,
+          address TEXT NOT NULL,
+          phone TEXT NOT NULL,
+          services TEXT[] NOT NULL,
+          images TEXT[] NOT NULL,
+          review_count INTEGER NOT NULL DEFAULT 0,
+          owner_id VARCHAR REFERENCES users(id),
+          created_at TIMESTAMP DEFAULT NOW()
+        )
     `;
     console.log("✅ Created barbershops table");
 

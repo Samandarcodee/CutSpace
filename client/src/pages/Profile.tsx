@@ -1,28 +1,46 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { User, Phone, MapPin, Calendar, Shield } from "lucide-react";
+import { User, Phone, MapPin, Calendar, Shield, Moon, Sun } from "lucide-react";
 import { useTelegram } from "@/contexts/TelegramContext";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
+import { useTheme } from "@/contexts/ThemeContext";
+import { Switch } from "@/components/ui/switch";
+import type { Booking } from "@shared/schema";
 
 export default function Profile() {
   const { user: telegramUser, backendUser, isAdmin, refreshUser } = useTelegram();
+  const { theme, setTheme, toggleTheme } = useTheme();
   
   // Real bookings statistikasi
-  const { data: bookings = [] } = useQuery({
+  type BookingWithExtras = Booking & { customerId?: string };
+
+  const { data: bookings = [] } = useQuery<BookingWithExtras[]>({
     queryKey: ["/api/bookings"],
   });
   
-  const userBookings = bookings.filter((b: any) => 
-    b.customerName === `${telegramUser?.first_name} ${telegramUser?.last_name || ''}`.trim() ||
-    backendUser?.id === b.customerId
-  );
+  const telegramFullName = `${telegramUser?.first_name || ""} ${telegramUser?.last_name || ""}`.trim();
+  const userBookings = bookings.filter((booking) => {
+    const matchesName = telegramFullName ? booking.customerName === telegramFullName : false;
+    const matchesCustomerId = backendUser?.id
+      ? booking.customerId === backendUser.id
+      : false;
+    return matchesName || matchesCustomerId;
+  });
   
   const stats = [
     { label: "Jami yozilishlar", value: userBookings.length.toString() },
-    { label: "Faol yozilishlar", value: userBookings.filter((b: any) => b.status === "pending" || b.status === "confirmed").length.toString() },
-    { label: "Bajarilgan", value: userBookings.filter((b: any) => b.status === "completed").length.toString() },
+    {
+      label: "Faol yozilishlar",
+      value: userBookings
+        .filter((booking) => booking.status === "pending" || booking.status === "confirmed")
+        .length.toString(),
+    },
+    {
+      label: "Bajarilgan",
+      value: userBookings.filter((booking) => booking.status === "completed").length.toString(),
+    },
   ];
   
   const user = {
@@ -103,6 +121,38 @@ export default function Profile() {
                 </div>
               ))}
             </div>
+          </Card>
+
+          <Card className="p-4 bg-gradient-to-br from-card to-card/50">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="font-semibold text-sm">
+                  {theme === "dark" ? "Tungi rejim" : "Yorug' rejim"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Ko'zlar uchun qulay ko'rinishni tanlang
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                {theme === "dark" ? (
+                  <Moon className="w-4 h-4 text-primary" />
+                ) : (
+                  <Sun className="w-4 h-4 text-amber-500" />
+                )}
+                <Switch
+                  checked={theme === "dark"}
+                  onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
+                  aria-label="Tungi rejimni yoqish yoki o'chirish"
+                />
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              className="w-full justify-start mt-3 text-xs text-muted-foreground hover:text-foreground"
+              onClick={toggleTheme}
+            >
+              {theme === "dark" ? "☀️ Yorug' rejimga o'tish" : "🌙 Tungi rejimni yoqish"}
+            </Button>
           </Card>
 
           <Card className="p-4 bg-gradient-to-br from-card to-card/50">

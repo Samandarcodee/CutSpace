@@ -7,6 +7,7 @@ import { MapPin } from "lucide-react";
 interface BarbershopCardProps {
   id: string;
   name: string;
+  description?: string | null;
   rating: number;
   address: string;
   services: string[];
@@ -18,6 +19,7 @@ interface BarbershopCardProps {
 export default function BarbershopCard({
   id,
   name,
+  description,
   rating,
   address,
   services,
@@ -51,6 +53,9 @@ export default function BarbershopCard({
       <div className="p-4 space-y-3">
         <div>
           <h3 className="text-lg font-bold mb-2 group-hover:text-primary transition-colors">{name}</h3>
+          {description && (
+            <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{description}</p>
+          )}
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
             <RatingStars rating={rating} size="sm" />
             <span>({reviewCount} sharh)</span>

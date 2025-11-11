@@ -8,6 +8,7 @@ export default function BarbershopCardExample() {
       <BarbershopCard
         id="1"
         name="Premium Barber Shop"
+        description="Premium darajadagi xizmatlar va zamonaviy interyerga ega barbershop."
         rating={4.8}
         address="Amir Temur ko'chasi 15, Yunusobod tumani"
         services={["Soch olish", "Soqol qirish", "Styling"]}

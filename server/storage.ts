@@ -70,11 +70,12 @@ export class MemStorage implements IStorage {
       createdAt: new Date(),
     };
     this.users.set("admin-1", adminUser);
-    
+
     // Demo barbershops
     const shop1: Barbershop = {
       id: "1",
       name: "Premium Barber Shop",
+      description: "Premium darajadagi xizmatlar va zamonaviy interyerga ega barbershop.",
       rating: 4.8,
       address: "Amir Temur ko'chasi 15, Yunusobod tumani",
       phone: "+998 90 123 45 67",
@@ -88,6 +89,7 @@ export class MemStorage implements IStorage {
     const shop2: Barbershop = {
       id: "2",
       name: "Classic Barber",
+      description: "Klassik uslubdagi erkaklar salonida tajribali ustalar xizmat ko'rsatadi.",
       rating: 4.6,
       address: "Mustaqillik ko'chasi 42, Mirobod tumani",
       phone: "+998 90 234 56 78",
@@ -101,6 +103,7 @@ export class MemStorage implements IStorage {
     const shop3: Barbershop = {
       id: "3",
       name: "Modern Style Barber",
+      description: "Moda yo'nalishidagi soch turmaklari va premium xizmatlar markazi.",
       rating: 4.9,
       address: "Buyuk Ipak Yo'li 88, Shayxontohur tumani",
       phone: "+998 90 345 67 89",
@@ -145,7 +148,16 @@ export class MemStorage implements IStorage {
 
   async createUser(user: InsertUser): Promise<User> {
     const id = randomUUID();
-    const newUser: User = { id, ...user, createdAt: new Date() };
+    const newUser: User = {
+      id,
+      telegramId: user.telegramId,
+      firstName: user.firstName ?? null,
+      lastName: user.lastName ?? null,
+      username: user.username ?? null,
+      role: user.role ?? "customer",
+      barbershopId: user.barbershopId ?? null,
+      createdAt: new Date(),
+    };
     this.users.set(id, newUser);
     return newUser;
   }
@@ -171,12 +183,14 @@ export class MemStorage implements IStorage {
 
   async createBarbershop(barbershop: InsertBarbershop): Promise<Barbershop> {
     const id = randomUUID();
-    const newShop: Barbershop = { 
-      ...barbershop, 
-      id, 
-      rating: barbershop.rating || 0, 
+    const newShop: Barbershop = {
+      ...barbershop,
+      id,
+      rating: barbershop.rating || 0,
+      description: barbershop.description ? barbershop.description : null,
+      ownerId: barbershop.ownerId ?? null,
       reviewCount: 0,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
     this.barbershops.set(id, newShop);
     return newShop;
@@ -185,7 +199,14 @@ export class MemStorage implements IStorage {
   async updateBarbershop(id: string, data: Partial<InsertBarbershop>): Promise<Barbershop | undefined> {
     const shop = this.barbershops.get(id);
     if (shop) {
-      const updated = { ...shop, ...data };
+      const updated = { ...shop, ...data } as Barbershop;
+      if ("description" in data) {
+        updated.description =
+          data.description && data.description !== "" ? (data.description as string) : null;
+      }
+      if ("ownerId" in data) {
+        updated.ownerId = data.ownerId ?? null;
+      }
       this.barbershops.set(id, updated);
       return updated;
     }
@@ -321,15 +342,25 @@ export class DbStorage implements IStorage {
   async createBarbershop(barbershop: InsertBarbershop): Promise<Barbershop> {
     const result = await this.db
       .insert(barbershops)
-      .values(barbershop)
+      .values({
+        ...barbershop,
+        description: barbershop.description ?? null,
+      })
       .returning();
     return result[0];
   }
 
   async updateBarbershop(id: string, data: Partial<InsertBarbershop>): Promise<Barbershop | undefined> {
+    const updateData: Partial<InsertBarbershop> & { description?: string | null } = { ...data };
+    if (updateData.description === undefined) {
+      delete updateData.description;
+    } else if (updateData.description === "") {
+      updateData.description = null;
+    }
+
     const result = await this.db
       .update(barbershops)
-      .set(data)
+      .set(updateData)
       .where(eq(barbershops.id, id))
       .returning();
     return result[0];
