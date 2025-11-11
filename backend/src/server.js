@@ -4,9 +4,17 @@ import dotenv from 'dotenv';
 import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { existsSync, mkdirSync } from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, '..', 'uploads');
+if (!existsSync(uploadsDir)) {
+  mkdirSync(uploadsDir, { recursive: true });
+  console.log('✅ Uploads directory created');
+}
 import {
   getAllBarbers,
   getBarberById,
@@ -37,7 +45,7 @@ app.use(express.json());
 // Multer configuration for image upload
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, '..', 'uploads'));
+    cb(null, uploadsDir);
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -62,7 +70,7 @@ const upload = multer({
 });
 
 // Serve uploaded images
-app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+app.use('/uploads', express.static(uploadsDir));
 
 // Serve public files (admin panel)
 app.use(express.static(path.join(__dirname, '..', '..', 'public')));
@@ -358,14 +366,30 @@ app.post('/api/upload/barber-image', upload.single('image'), (req, res) => {
     }
     
     const imageUrl = `/uploads/${req.file.filename}`;
+    console.log('✅ Image uploaded:', imageUrl);
     res.json({ 
       success: true, 
       imageUrl: imageUrl,
       message: 'Rasm muvaffaqiyatli yuklandi' 
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('❌ Upload error:', error);
+    res.status(500).json({ error: error.message || 'Rasm yuklashda xatolik' });
   }
+});
+
+// Error handler for multer errors
+app.use((error, req, res, next) => {
+  if (error instanceof multer.MulterError) {
+    if (error.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ error: 'Fayl hajmi 5MB dan kichik bo\'lishi kerak' });
+    }
+    return res.status(400).json({ error: error.message });
+  }
+  if (error) {
+    return res.status(400).json({ error: error.message });
+  }
+  next();
 });
 
 // Add new barber (admin)
