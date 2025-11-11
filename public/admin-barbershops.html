@@ -317,7 +317,8 @@ VIP xizmat - 100,000 so'm"></textarea>
     </div>
 
     <script>
-        const API = 'http://localhost:3000/api';
+        // Auto-detect API URL (works in both local and production)
+        const API = window.location.origin + '/api';
         let uploadedImages = [];
 
         async function handleImageUpload(event) {
@@ -366,7 +367,7 @@ VIP xizmat - 100,000 so'm"></textarea>
             const grid = document.getElementById('imagePreviewGrid');
             grid.innerHTML = uploadedImages.map((imgPath, index) => `
                 <div class="image-preview-item">
-                    <img src="${API.replace('/api', '')}${imgPath}" alt="Preview ${index + 1}">
+                    <img src="${window.location.origin}${imgPath}" alt="Preview ${index + 1}">
                     <button class="remove-image" onclick="removeImage(${index})">×</button>
                 </div>
             `).join('');
@@ -478,7 +479,7 @@ VIP xizmat - 100,000 so'm"></textarea>
                             <div style="margin-top: 12px;">
                                 <strong>Rasmlar:</strong>
                                 <div style="display: flex; gap: 8px; margin-top: 8px; overflow-x: auto;">
-                                    ${shop.images.map(img => `<img src="${API.replace('/api', '')}${img}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;" />`).join('')}
+                                    ${shop.images.map(img => `<img src="${window.location.origin}${img}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;" />`).join('')}
                                 </div>
                             </div>
                         ` : ''}
