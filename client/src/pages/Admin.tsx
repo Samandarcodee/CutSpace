@@ -7,9 +7,14 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Edit, Plus, Shield, MapPin } from "lucide-react";
+import { Trash2, Edit, Plus, Shield, MapPin, Upload, X } from "lucide-react";
 import type { Barbershop } from "@shared/schema";
 
 export default function Admin() {
@@ -17,8 +22,10 @@ export default function Admin() {
   const { toast } = useToast();
   const [showDialog, setShowDialog] = useState(false);
   const [editingShop, setEditingShop] = useState<Barbershop | null>(null);
+  const [uploadingImages, setUploadingImages] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     name: "",
+    description: "",
     address: "",
     phone: "",
     services: "",
@@ -36,11 +43,61 @@ export default function Admin() {
         <Card className="p-8 max-w-md text-center">
           <Shield className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
           <h2 className="text-xl font-bold mb-2">Kirish taqiqlangan</h2>
-          <p className="text-muted-foreground">Admin paneliga kirish huquqi yo'q</p>
+          <p className="text-muted-foreground">
+            Admin paneliga kirish huquqi yo'q
+          </p>
         </Card>
       </div>
     );
   }
+
+  // Rasm yuklash funksiyasi
+  const handleImageUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+
+    const formDataUpload = new FormData();
+    
+    for (let i = 0; i < files.length; i++) {
+      formDataUpload.append('image', files[i]);
+      
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/upload/barber-image`, {
+          method: 'POST',
+          body: formDataUpload,
+        });
+
+        if (!response.ok) throw new Error('Yuklashda xatolik');
+
+        const data = await response.json();
+        const imageUrl = data.imageUrl;
+
+        setUploadingImages(prev => [...prev, imageUrl]);
+        
+        // Mavjud rasmlar ro'yxatiga qo'shish
+        setFormData(prev => ({
+          ...prev,
+          images: prev.images 
+            ? `${prev.images}\n${imageUrl}` 
+            : imageUrl
+        }));
+
+        toast({ title: "Rasm yuklandi! ✅" });
+      } catch (error: any) {
+        toast({
+          title: "Xatolik",
+          description: error.message || "Rasm yuklashda muammo",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  // Rasmni o'chirish
+  const removeImage = (imageUrl: string) => {
+    const images = formData.images.split('\n').filter(img => img.trim() && img !== imageUrl);
+    setFormData({ ...formData, images: images.join('\n') });
+    setUploadingImages(prev => prev.filter(img => img !== imageUrl));
+  };
 
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -108,23 +165,27 @@ export default function Admin() {
   const resetForm = () => {
     setFormData({
       name: "",
+      description: "",
       address: "",
       phone: "",
       services: "",
       images: "",
     });
     setEditingShop(null);
+    setUploadingImages([]);
   };
 
   const handleEdit = (shop: Barbershop) => {
     setEditingShop(shop);
     setFormData({
       name: shop.name,
+      description: shop.description || "",
       address: shop.address,
       phone: shop.phone || "",
       services: shop.services.join("\n"),
       images: shop.images.join("\n"),
     });
+    setUploadingImages(shop.images);
     setShowDialog(true);
   };
 
@@ -160,11 +221,16 @@ export default function Admin() {
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
                   Admin Panel
                 </h1>
-                <p className="text-sm text-muted-foreground">Sartaroshxonalarni boshqarish</p>
+                <p className="text-sm text-muted-foreground">
+                  Sartaroshxonalarni boshqarish
+                </p>
               </div>
             </div>
-            <Button 
-              onClick={() => { resetForm(); setShowDialog(true); }}
+            <Button
+              onClick={() => {
+                resetForm();
+                setShowDialog(true);
+              }}
               className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 w-full sm:w-auto"
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -175,15 +241,22 @@ export default function Admin() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {barbershops.map((shop) => (
-            <Card key={shop.id} className="overflow-hidden hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-card to-card/50">
+            <Card
+              key={shop.id}
+              className="overflow-hidden hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-card to-card/50"
+            >
               <div className="p-5 space-y-3">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <h3 className="font-bold text-lg mb-1">{shop.name}</h3>
                     <div className="flex items-center gap-1 text-sm mb-2">
                       <span className="text-yellow-500">⭐</span>
-                      <span className="font-semibold">{shop.rating.toFixed(1)}</span>
-                      <span className="text-muted-foreground text-xs">({shop.reviewCount})</span>
+                      <span className="font-semibold">
+                        {shop.rating.toFixed(1)}
+                      </span>
+                      <span className="text-muted-foreground text-xs">
+                        ({shop.reviewCount})
+                      </span>
                     </div>
                   </div>
                   <div className="flex gap-1">
@@ -200,7 +273,9 @@ export default function Admin() {
                       size="icon"
                       className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"
                       onClick={() => {
-                        if (confirm(`"${shop.name}" ni o'chirishni xohlaysizmi?`)) {
+                        if (
+                          confirm(`"${shop.name}" ni o'chirishni xohlaysizmi?`)
+                        ) {
                           deleteMutation.mutate(shop.id);
                         }
                       }}
@@ -209,7 +284,7 @@ export default function Admin() {
                     </Button>
                   </div>
                 </div>
-                
+
                 <div className="space-y-2 text-sm">
                   <div className="flex items-start gap-2 text-muted-foreground">
                     <MapPin className="w-4 h-4 shrink-0 mt-0.5" />
@@ -221,11 +296,13 @@ export default function Admin() {
                 </div>
 
                 <div className="pt-2 border-t">
-                  <p className="text-xs text-muted-foreground mb-2">Xizmatlar:</p>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Xizmatlar:
+                  </p>
                   <div className="flex flex-wrap gap-1">
                     {shop.services.slice(0, 2).map((service, idx) => (
                       <Badge key={idx} variant="secondary" className="text-xs">
-                        {service.split(' - ')[0]}
+                        {service.split(" - ")[0]}
                       </Badge>
                     ))}
                     {shop.services.length > 2 && (
@@ -240,8 +317,10 @@ export default function Admin() {
           ))}
 
           {barbershops.length === 0 && (
-            <Card className="p-6 text-center">
-              <p className="text-muted-foreground">Hozircha sartaroshxona yo'q</p>
+            <Card className="p-6 text-center col-span-full">
+              <p className="text-muted-foreground">
+                Hozircha sartaroshxona yo'q
+              </p>
             </Card>
           )}
         </div>
@@ -250,63 +329,155 @@ export default function Admin() {
           <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                {editingShop ? "Sartaroshxonani tahrirlash" : "Yangi sartaroshxona qo'shish"}
+                {editingShop
+                  ? "Sartaroshxonani tahrirlash"
+                  : "Yangi sartaroshxona qo'shish"}
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4 mt-4">
               <div>
-                <label className="text-sm font-medium">Nomi</label>
+                <label className="text-sm font-medium">Nomi *</label>
                 <Input
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                   placeholder="Premium Barber Shop"
+                  className="mt-2"
                 />
               </div>
+              
               <div>
-                <label className="text-sm font-medium">Manzil</label>
+                <label className="text-sm font-medium">Tavsif</label>
+                <Textarea
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
+                  placeholder="Professional sartaroshlar, zamonaviy xizmat..."
+                  rows={3}
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">Manzil *</label>
                 <Input
                   value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, address: e.target.value })
+                  }
                   placeholder="Amir Temur ko'chasi 15"
                 />
               </div>
+
               <div>
                 <label className="text-sm font-medium">Telefon</label>
                 <Input
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phone: e.target.value })
+                  }
                   placeholder="+998 90 123 45 67"
                 />
               </div>
+
               <div>
-                <label className="text-sm font-medium">Xizmatlar (har birini yangi qatorda)</label>
+                <label className="text-sm font-medium">
+                  Xizmatlar (har birini yangi qatorda)
+                </label>
                 <Textarea
                   value={formData.services}
-                  onChange={(e) => setFormData({ ...formData, services: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, services: e.target.value })
+                  }
                   placeholder="Soch olish - 50,000 so'm&#10;Soqol qirish - 30,000 so'm"
                   rows={4}
                 />
               </div>
+
               <div>
-                <label className="text-sm font-medium">Rasmlar (har birini yangi qatorda)</label>
-                <Textarea
-                  value={formData.images}
-                  onChange={(e) => setFormData({ ...formData, images: e.target.value })}
-                  placeholder="/images/luxury.png&#10;/images/barber-work.png"
-                  rows={3}
-                />
+                <label className="text-sm font-medium block mb-2">
+                  Rasmlar
+                </label>
+                
+                {/* File Upload Button */}
+                <div className="border-2 border-dashed border-border rounded-lg p-4 text-center hover:border-primary transition-colors">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={(e) => handleImageUpload(e.target.files)}
+                    className="hidden"
+                    id="image-upload"
+                  />
+                  <label 
+                    htmlFor="image-upload"
+                    className="cursor-pointer flex flex-col items-center gap-2"
+                  >
+                    <Upload className="w-8 h-8 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">
+                      Rasm yuklash uchun bosing
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      PNG, JPG, WEBP (maks. 5MB)
+                    </span>
+                  </label>
+                </div>
+
+                {/* Yuklangan rasmlar */}
+                {uploadingImages.length > 0 && (
+                  <div className="mt-3 grid grid-cols-3 gap-2">
+                    {uploadingImages.map((img, idx) => (
+                      <div key={idx} className="relative group">
+                        <img 
+                          src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${img}`}
+                          alt={`Preview ${idx + 1}`}
+                          className="w-full h-20 object-cover rounded border"
+                        />
+                        <button
+                          onClick={() => removeImage(img)}
+                          className="absolute top-1 right-1 bg-destructive text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Manual URL input (optional) */}
+                <details className="mt-3">
+                  <summary className="text-xs text-muted-foreground cursor-pointer">
+                    Yoki URL orqali qo'shish
+                  </summary>
+                  <Textarea
+                    value={formData.images}
+                    onChange={(e) =>
+                      setFormData({ ...formData, images: e.target.value })
+                    }
+                    placeholder="/uploads/image1.jpg&#10;/uploads/image2.jpg"
+                    rows={2}
+                    className="mt-2"
+                  />
+                </details>
               </div>
-              <div className="flex gap-2">
+
+              <div className="flex gap-2 pt-4">
                 <Button
                   onClick={handleSubmit}
-                  disabled={createMutation.isPending || updateMutation.isPending}
+                  disabled={
+                    createMutation.isPending || updateMutation.isPending
+                  }
                   className="flex-1"
                 >
                   {editingShop ? "Yangilash" : "Qo'shish"}
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => { setShowDialog(false); resetForm(); }}
+                  onClick={() => {
+                    setShowDialog(false);
+                    resetForm();
+                  }}
                 >
                   Bekor qilish
                 </Button>
@@ -318,4 +489,3 @@ export default function Admin() {
     </div>
   );
 }
-

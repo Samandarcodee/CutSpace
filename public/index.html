@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CutSpace - Sartaroshxona</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f4f4f5;
+            padding: 16px;
+            padding-bottom: 80px;
+        }
+        .header { margin-bottom: 20px; }
+        .header h1 { font-size: 28px; margin-bottom: 8px; }
+        .welcome { color: #999; }
+        .barber-card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+            cursor: pointer;
+        }
+        .barber-header { display: flex; align-items: center; margin-bottom: 12px; }
+        .avatar { font-size: 48px; margin-right: 12px; }
+        .barber-info { flex: 1; }
+        .barber-name { font-size: 18px; font-weight: 600; }
+        .rating { color: #ffcc00; }
+        .services { margin: 12px 0; }
+        .service-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            background: #f4f4f5;
+            border-radius: 8px;
+            margin: 4px 0;
+        }
+        .price { font-weight: 600; color: #2481cc; }
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            background: #2481cc;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn:active { opacity: 0.8; }
+        .spinner {
+            border: 3px solid #f4f4f5;
+            border-top: 3px solid #2481cc;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 40px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            margin: 50px auto;
+            padding: 20px;
+            border-radius: 16px;
+            max-width: 400px;
+        }
+        .close { float: right; font-size: 28px; cursor: pointer; }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid #e5e5e5;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+        .time-slots {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin: 12px 0;
+        }
+        .time-slot {
+            padding: 12px;
+            border: 2px solid #f4f4f5;
+            background: #f4f4f5;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+        }
+        .time-slot.active {
+            background: #2481cc;
+            border-color: #2481cc;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Sartaroshlar</h1>
+        <p class="welcome">Assalomu alaykum! 👋</p>
+    </div>
+
+    <div id="barbers"></div>
+
+    <!-- Booking Modal -->
+    <div id="bookingModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="modalBarberName"></h2>
+            <input type="date" id="bookingDate" />
+            <div class="time-slots" id="timeSlots"></div>
+            <button class="btn" onclick="submitBooking()">✅ Band qilish</button>
+        </div>
+    </div>
+
+    <script>
+        const API = 'http://localhost:3000/api';
+        let selectedBarber = null;
+        let selectedTime = null;
+
+        // Load barbers
+        async function loadBarbers() {
+            try {
+                const response = await fetch(`${API}/barbers`);
+                const barbers = await response.json();
+                
+                const container = document.getElementById('barbers');
+                container.innerHTML = barbers.map(barber => `
+                    <div class="barber-card" onclick="openBooking(${barber.id}, '${barber.name}')">
+                        <div class="barber-header">
+                            <div class="avatar">${barber.avatar}</div>
+                            <div class="barber-info">
+                                <div class="barber-name">${barber.name}</div>
+                                <div class="rating">⭐️ ${barber.rating.toFixed(1)} (${barber.total_reviews})</div>
+                            </div>
+                        </div>
+                        <p style="color: #999; margin-bottom: 12px;">${barber.description}</p>
+                        <div class="services">
+                            ${barber.services.slice(0, 3).map(s => `
+                                <div class="service-item">
+                                    <span>${s.name}</span>
+                                    <span class="price">${(s.price/1000).toFixed(0)} ming so'm</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <button class="btn">Band qilish</button>
+                    </div>
+                `).join('');
+            } catch (err) {
+                document.getElementById('barbers').innerHTML = 
+                    '<div style="text-align: center; padding: 40px; color: #999;">Backend ishlamayapti</div>';
+            }
+        }
+
+        function openBooking(id, name) {
+            selectedBarber = id;
+            document.getElementById('modalBarberName').textContent = name;
+            document.getElementById('bookingModal').style.display = 'block';
+            
+            // Set min date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('bookingDate').value = today;
+            document.getElementById('bookingDate').min = today;
+            
+            // Generate time slots
+            const times = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'];
+            document.getElementById('timeSlots').innerHTML = times.map(t => 
+                `<div class="time-slot" onclick="selectTime('${t}')">${t}</div>`
+            ).join('');
+        }
+
+        function closeModal() {
+            document.getElementById('bookingModal').style.display = 'none';
+        }
+
+        function selectTime(time) {
+            selectedTime = time;
+            document.querySelectorAll('.time-slot').forEach(el => el.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        async function submitBooking() {
+            if (!selectedTime) {
+                alert('Vaqtni tanlang!');
+                return;
+            }
+
+            const date = document.getElementById('bookingDate').value;
+            const tg = window.Telegram?.WebApp;
+            const user = tg?.initDataUnsafe?.user || { id: '123456789', first_name: 'Test', last_name: 'User' };
+
+            try {
+                const response = await fetch(`${API}/bookings`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        client_name: `${user.first_name} ${user.last_name || ''}`.trim(),
+                        client_telegram_id: user.id.toString(),
+                        barber_id: selectedBarber,
+                        booking_date: date,
+                        booking_time: selectedTime
+                    })
+                });
+
+                if (response.ok) {
+                    alert('✅ Band qilindi!');
+                    closeModal();
+                } else {
+                    alert('❌ Xatolik yuz berdi');
+                }
+            } catch (err) {
+                alert('❌ Backend bilan bog\'lanib bo\'lmadi');
+            }
+        }
+
+        // Initialize
+        window.Telegram?.WebApp?.ready();
+        window.Telegram?.WebApp?.expand();
+        loadBarbers();
+    </script>
+</body>
+</html>
+
+

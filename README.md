@@ -1,382 +1,336 @@
-# 💈 Toshkent Sartarosh - Telegram Mini App
+# 💈 CutSpace - Telegram Mini App
 
-Modern sartaroshxonalar uchun onlayn band qilish va boshqaruv tizimi. Telegram Mini App sifatida ishlaydigan to'liq funksional loyiha.
+**Toshkent shahri uchun sartaroshxona band qilish tizimi**
 
-## ✨ Xususiyatlar
-
-### 👤 Mijoz Funksiyalari
-- 🏪 Sartaroshxonalar ro'yxatini ko'rish
-- ⭐ Reyting va sharhlarni o'qish
-- ✍️ Sharh qoldirish (yulduz reytingi + matn)
-- 📅 Online yozilish (sana va vaqt tanlash)
-- 📱 O'z yozilishlaringizni kuzatish
-- 📊 Status tekshirish (Kutilmoqda/Qabul/Rad/Bajarilgan)
-
-### 👑 Admin Panel
-- 📋 Barcha sartaroshxonalarni boshqarish
-- ➕ Yangi sartaroshxona qo'shish
-- ✏️ Sartaroshxona ma'lumotlarini tahrirlash
-- 🗑️ Sartaroshxonalarni o'chirish
-- 👥 Foydalanuvchilar rollarini boshqarish
-
-### ✂️ Sartarosh Paneli
-- 📋 Yozilgan mijozlarni ko'rish
-- ✅ Yozilishlarni qabul qilish
-- ❌ Yozilishlarni rad etish
-- 📊 Status boshqaruvi
-
-### 🤖 Telegram Integratsiyasi
-- 🔔 Yangi yozilishda avtomatik xabar
-- 👤 Telegram orqali autentifikatsiya
-- 🎨 Telegram tema bilan integratsiya
-
-## 🛠️ Texnologiyalar
-
-### Frontend
-- ⚛️ React 18 + TypeScript
-- ⚡ Vite
-- 🎨 Tailwind CSS
-- 🧩 Shadcn UI
-- 🔄 TanStack Query
-- 🛣️ Wouter (routing)
-- 📱 Telegram WebApp SDK
-
-### Backend
-- 🟢 Node.js + Express
-- 📘 TypeScript
-- 🐘 PostgreSQL (Neon Database)
-- 🔄 Drizzle ORM
-- 🤖 node-telegram-bot-api
-
-## 🚀 Tezkor Ishga Tushirish
-
-### 1️⃣ Loyihani Clone qilish
-
-```bash
-git clone <repository-url>
-cd toshkent-sartarosh
-npm install
-```
-
-### 2️⃣ Environment Variables sozlash
-
-`.env` fayl yarating:
-
-```bash
-cp .env.example .env
-```
-
-`.env` faylni tahrirlang:
-
-```env
-# Database (Neon/PostgreSQL)
-DATABASE_URL=postgresql://user:password@host/database?sslmode=require
-
-# Telegram Bot (@BotFather dan oling)
-TELEGRAM_BOT_TOKEN=your_telegram_bot_token
-
-# Environment
-NODE_ENV=development
-```
-
-### 3️⃣ Database sozlash
-
-#### Neon Database yaratish (Tavsiya etiladi - BEPUL):
-
-1. 🌐 [console.neon.tech](https://console.neon.tech) ga o'ting
-2. ➕ "New Project" yarating
-3. 📋 Connection string ni `.env` fayliga qo'ying
-
-#### Database setup:
-
-```bash
-# Avtomatik setup (tavsiya etiladi)
-npm run db:setup
-
-# Yoki qo'lda:
-npm run db:migrate    # Jadvallar yaratish
-npm run db:seed       # Demo data yuklash
-npm run db:check      # Database tekshirish
-```
-
-### 4️⃣ Loyihani ishga tushirish
-
-```bash
-# Development mode
-npm run dev
-
-# Production mode
-npm run build
-npm start
-```
-
-Server `http://localhost:5000` da ishga tushadi! 🎉
-
-## 📊 Database Health Check
-
-Database holatini tekshirish:
-
-```bash
-npm run db:check
-```
-
-Bu buyruq quyidagilarni tekshiradi:
-- ✅ DATABASE_URL mavjudligi
-- ✅ Database connection
-- ✅ Jadvallar mavjudligi
-- ✅ Ma'lumotlar soni
-- ✅ Admin user mavjudligi
-
-## 👑 Admin Panel
-
-Admin panel'ga kirish:
-
-1. **Telegram ID**: `5928372261` bilan kirish
-2. **UI'da**: BottomNav'da "Admin" tab ko'rinadi
-3. **URL**: `/admin` yo'lidan kirish mumkin
-
-Admin funksiyalari:
-- ➕ Yangi sartaroshxona qo'shish
-- ✏️ Mavjud sartaroshxonalarni tahrirlash
-- 🗑️ Sartaroshxonalarni o'chirish
-- 📊 Barcha yozilishlarni ko'rish
-
-## 🎯 Memory Storage vs Database
-
-Loyiha ikkala rejimda ishlaydi:
-
-### 🔵 Database Mode (Production)
-- ✅ DATABASE_URL o'rnatilgan
-- ✅ Ma'lumotlar doimiy saqlanadi
-- ✅ Production uchun tavsiya etiladi
-
-### 🟡 Memory Storage Mode (Development)
-- ⚠️ DATABASE_URL o'rnatilmagan
-- ⚠️ Server restart qilganda ma'lumotlar o'chadi
-- ⚠️ Faqat development/test uchun
-
-**Ishlatyotgan rejimni bilish:**
-
-Server start qilganda console'da ko'rasiz:
-```
-✅ Connected to PostgreSQL database!        // Database mode
-# yoki
-📦 Using in-memory storage (demo mode)      // Memory mode
-```
-
-## 📁 Loyiha Tuzilishi
-
-```
-toshkent-sartarosh/
-├── client/                    # Frontend
-│   ├── src/
-│   │   ├── components/       # React komponentlar
-│   │   │   ├── ui/          # Shadcn UI komponentlar
-│   │   │   └── ...          # Custom komponentlar
-│   │   ├── pages/           # Sahifalar (Home, Bookings, Admin)
-│   │   ├── contexts/        # React Context (Telegram)
-│   │   └── lib/            # Utilities
-│   └── index.html
-│
-├── server/                   # Backend
-│   ├── index.ts            # Server entry point
-│   ├── routes.ts           # API routes
-│   ├── auth.ts             # Authentication middleware
-│   ├── storage.ts          # Storage layer (Memory/DB)
-│   ├── telegram.ts         # Telegram bot
-│   ├── migrations.ts       # Database migrations
-│   └── seed.ts             # Database seeding
-│
-├── shared/                  # Shared code
-│   └── schema.ts           # Database schema + types
-│
-├── scripts/                 # Utility scripts
-│   ├── check-database.ts   # Database health check
-│   └── setup-database.sh   # Database setup script
-│
-├── .env.example            # Environment template
-├── DATABASE_SETUP.md       # Database setup guide
-└── README.md              # Siz bu faylni o'qiyapsiz!
-```
-
-## 🔌 API Endpoints
-
-### 🔓 Public Endpoints
-
-```
-GET    /api/barbershops              # Barcha sartaroshxonalar
-GET    /api/barbershops/:id          # Bitta sartaroshxona
-GET    /api/barbershops/:id/reviews  # Sartaroshxona sharhlari
-POST   /api/reviews                  # Sharh qo'shish
-GET    /api/bookings                 # Barcha yozilishlar
-POST   /api/bookings                 # Yangi yozilish
-POST   /api/bookings/:id/accept      # Yozilishni qabul qilish
-POST   /api/bookings/:id/reject      # Yozilishni rad etish
-```
-
-### 🔐 Auth Endpoints
-
-```
-POST   /api/auth/telegram            # Telegram login
-GET    /api/auth/me                  # Current user
-```
-
-### 👑 Admin Endpoints
-
-```
-POST   /api/admin/barbershops        # Sartaroshxona qo'shish
-PUT    /api/admin/barbershops/:id    # Sartaroshxonani tahrirlash
-DELETE /api/admin/barbershops/:id    # Sartaroshxonani o'chirish
-PUT    /api/admin/users/:id/role     # User role o'zgartirish
-```
-
-### ✂️ Barber Endpoints
-
-```
-GET    /api/barber/bookings          # Barber bookinglar
-```
-
-## 📱 Telegram Mini App Sozlash
-
-### 1. Bot yaratish
-
-```
-1. Telegram'da @BotFather ga yozing
-2. /newbot buyrug'ini yuboring
-3. Bot nomini va username'ni kiriting
-4. Bot token'ni saqlang
-```
-
-### 2. Mini App sozlash
-
-```
-1. @BotFather'da /mybots
-2. Botingizni tanlang
-3. "Menu Button" → "Configure menu button"
-4. Web App URL'ni kiriting (masalan, Railway URL)
-```
-
-### 3. Production deploy
-
-**Railway:**
-```bash
-# Environment Variables o'rnating:
-DATABASE_URL=<your-database-url>
-TELEGRAM_BOT_TOKEN=<your-bot-token>
-NODE_ENV=production
-```
-
-**Render:**
-`render.yaml` faylda allaqachon sozlangan.
-
-## 🗄️ Database Schema
-
-```sql
--- Users (Mijozlar, Sartaroshlar, Adminlar)
-users (
-  id, telegram_id, first_name, last_name,
-  username, role, barbershop_id, created_at
-)
-
--- Sartaroshxonalar
-barbershops (
-  id, name, rating, address, phone,
-  services[], images[], review_count,
-  owner_id, created_at
-)
-
--- Sharhlar
-reviews (
-  id, barbershop_id, author, rating,
-  comment, date, created_at
-)
-
--- Yozilishlar
-bookings (
-  id, barbershop_id, customer_name,
-  service, date, time, status, created_at
-)
-```
-
-To'liq schema: [shared/schema.ts](./shared/schema.ts)
-
-## 🔧 Development Scripts
-
-```bash
-# Development
-npm run dev              # Dev server'ni ishga tushirish
-npm run dev:windows      # Windows uchun
-
-# Build
-npm run build            # Production build
-npm run start            # Production server
-
-# Database
-npm run db:migrate       # Migration ishga tushirish
-npm run db:seed          # Demo data yuklash
-npm run db:check         # Database tekshirish
-npm run db:setup         # To'liq database setup
-npm run db:push          # Schema'ni push qilish (Drizzle)
-
-# Other
-npm run check            # TypeScript check
-```
-
-## 🐛 Troubleshooting
-
-### Memory Storage ishlatyapti?
-
-```bash
-# Database URL tekshiring
-npm run db:check
-
-# .env faylini tekshiring
-cat .env
-
-# DATABASE_URL o'rnatilgan bo'lsa, server restart qiling
-```
-
-### Admin panel ko'rinmayapti?
-
-1. ✅ Telegram ID to'g'ri ekanligini tekshiring: `5928372261`
-2. ✅ Browser console'ni oching va loglarni ko'ring
-3. ✅ `isAdmin: true` ekanligini tasdiqlang
-4. ✅ Server loglarida admin role ko'rinishini tekshiring
-
-### Database connection xatosi?
-
-```bash
-# Health check ishga tushiring
-npm run db:check
-
-# Network, firewall, VPN ni tekshiring
-# Neon database active ekanligini tekshiring
-```
-
-## 📚 Qo'shimcha Dokumentatsiya
-
-- [DATABASE_SETUP.md](./DATABASE_SETUP.md) - To'liq database setup guide
-- [SETUP.md](./SETUP.md) - Loyiha setup guide
-
-## 📄 Litsenziya
-
-MIT
-
-## 👨‍💻 Muallif
-
-Toshkent Sartarosh - Telegram Mini App Demo
+To'liq ishlaydigan Telegram Mini App demo loyihasi. O'zbek tilida, zamonaviy UI/UX bilan.
 
 ---
 
-**⚡ Tezkor yordam:**
+## 🚀 Xususiyatlar
+
+### 👥 Mijoz (Client)
+- ✅ Sartaroshlar ro'yxatini ko'rish
+- ⭐️ Reyting va sharhlar
+- 📅 Onlayn band qilish (sana + vaqt)
+- 📊 Band qilish statusini real vaqtda kuzatish
+- ✍️ Sharh va reyting qoldirish
+- 🔔 Telegram orqali bildirishnomalar
+
+### 💼 Sartarosh (Barber)
+- 📋 Barcha bandlarni ko'rish
+- ✔️ Bandni qabul qilish
+- ✖️ Bandni rad etish
+- 🔔 Yangi band haqida Telegram xabarnoma
+- 📊 Real vaqtda yangilanishlar
+
+---
+
+## 🛠 Texnologiyalar
+
+### Backend
+- Node.js + Express
+- SQLite (better-sqlite3)
+- Telegram Bot API (node-telegram-bot-api)
+
+### Frontend
+- React 18
+- Vite
+- React Router
+- Axios
+- Telegram Web App SDK
+
+---
+
+## 📦 O'rnatish
+
+### 1. Telegram Bot yaratish
+
+1. [@BotFather](https://t.me/BotFather) ga o'ting
+2. `/newbot` buyrug'ini yuboring
+3. Bot nomini kiriting
+4. Bot username kiriting
+5. Bot token ni saqlab qo'ying
+
+### 2. Loyihani klonlash
 
 ```bash
-# Hamma narsani noldan sozlash
+cd CutSpace
+```
+
+### 3. Backend sozlash
+
+```bash
+cd backend
 npm install
-cp .env.example .env
-# .env ni tahrirlang
-npm run db:setup
+```
+
+`.env` fayl yarating:
+
+```env
+TELEGRAM_BOT_TOKEN=your_bot_token_here
+PORT=3000
+ADMIN_TELEGRAM_ID=your_telegram_id_here
+WEBAPP_URL=https://your-domain.com
+```
+
+**Telegram ID ni topish:**
+1. [@userinfobot](https://t.me/userinfobot) ga `/start` yuboring
+2. O'z ID ingizni oling
+
+Backend ni ishga tushiring:
+
+```bash
+npm start
+```
+
+### 4. Frontend sozlash
+
+```bash
+cd ../frontend
+npm install
+```
+
+`.env` fayl yarating:
+
+```env
+VITE_API_URL=http://localhost:3000/api
+```
+
+Development rejimda ishga tushirish:
+
+```bash
 npm run dev
 ```
 
-🎉 **Loyiha tayyor!** Endi `http://localhost:5000` da ishga tushdi!
+---
+
+## 🌐 Deploy qilish
+
+### Backend (Heroku / Railway / Render)
+
+1. Backendni deploy qiling
+2. Environment variables sozlang:
+   - `TELEGRAM_BOT_TOKEN`
+   - `ADMIN_TELEGRAM_ID`
+   - `WEBAPP_URL`
+
+### Frontend (Vercel / Netlify / GitHub Pages)
+
+1. Frontendni build qiling:
+   ```bash
+   npm run build
+   ```
+
+2. `VITE_API_URL` ni production URL ga o'zgartiring
+
+3. Deploy qiling
+
+### Telegram Mini App sozlash
+
+1. [@BotFather](https://t.me/BotFather) ga o'ting
+2. `/mybots` -> O'z botingiz -> `Bot Settings` -> `Menu Button`
+3. `Configure menu button` -> Web App URL kiriting
+4. Yoki `/setmenubutton` buyrug'i bilan
+
+---
+
+## 📱 Ishlatish
+
+### Mijoz sifatida
+
+1. Botga `/start` yuboring
+2. "Mini ilovani ochish" tugmasini bosing
+3. Sartaroshni tanlang
+4. Band qilish tugmasini bosing
+5. Sana va vaqtni tanlang
+6. Tasdiqlang
+
+**Statuslar:**
+- ⏳ **Kutilmoqda** - Sartarosh javobini kutmoqda
+- ✅ **Qabul qilindi** - Bandingiz tasdiqlandi
+- ❌ **Rad etildi** - Boshqa vaqt tanlang
+
+### Sartarosh sifatida
+
+1. URL ga `?role=barber` qo'shing:
+   ```
+   https://your-app.com/?role=barber
+   ```
+
+2. Yangi bandlarni ko'ring
+3. "Qabul qilish" yoki "Rad etish" tugmalarini bosing
+4. Mijoz avtomatik xabarnoma oladi
+
+---
+
+## 🎨 UI/UX Xususiyatlari
+
+- 📱 100% mobile responsive
+- 🎨 Telegram Mini App dizayni
+- 🌗 Light/Dark mode support
+- ⚡️ Smooth animations
+- 🔄 Real-time updates
+- 💨 Fast & lightweight
+
+---
+
+## 📂 Loyiha Strukturasi
+
+```
+CutSpace/
+├── backend/
+│   ├── src/
+│   │   ├── server.js       # Express server
+│   │   ├── database.js     # SQLite database
+│   │   └── bot.js          # Telegram bot
+│   └── package.json
+├── frontend/
+│   ├── src/
+│   │   ├── components/     # UI components
+│   │   ├── pages/          # Page components
+│   │   ├── api.js          # API calls
+│   │   ├── App.jsx         # Main app
+│   │   └── main.jsx        # Entry point
+│   ├── index.html
+│   └── package.json
+└── README.md
+```
+
+---
+
+## 🔧 Development
+
+### Backend development
+
+```bash
+cd backend
+npm run dev  # nodemon bilan
+```
+
+### Frontend development
+
+```bash
+cd frontend
+npm run dev
+```
+
+### Test qilish
+
+Telegram Web App SDK ni test qilish uchun:
+- Desktop: [Telegram Web](https://web.telegram.org)
+- Mobile: Telegram mobil ilovasi
+
+---
+
+## 🔔 Bildirishnomalar
+
+### Mijoz uchun:
+1. ✅ Band tasdiqlanganda
+2. ❌ Band rad etilganda
+
+### Sartarosh uchun:
+1. 🔔 Yangi band yaratilganda
+
+---
+
+## 🌟 Kengaytirish imkoniyatlari
+
+- [ ] To'lov tizimi (Click, Payme)
+- [ ] Xizmat tanlash
+- [ ] Bonus sistema
+- [ ] Geolokatsiya
+- [ ] Ko'p filial qo'llab-quvvatlash
+- [ ] Admin panel
+- [ ] Analytics
+- [ ] Push notifications
+- [ ] Sartarosh jadval boshqaruvi
+- [ ] Mijoz tarixi
+
+---
+
+## 🤝 Hissa qo'shish
+
+1. Fork qiling
+2. Feature branch yarating (`git checkout -b feature/amazing`)
+3. Commit qiling (`git commit -m 'Add amazing feature'`)
+4. Push qiling (`git push origin feature/amazing`)
+5. Pull Request oching
+
+---
+
+## 📄 License
+
+MIT License - xohlagan maqsadda ishlatishingiz mumkin.
+
+---
+
+## 💡 Maslahatlar
+
+### Development da test qilish
+
+Telegram Mini App SDK ni localhost da test qilish uchun:
+
+1. **ngrok** yoki **localtunnel** ishlatish:
+   ```bash
+   npx localtunnel --port 5173
+   ```
+
+2. HTTPS URL ni BotFather ga qo'shish
+
+3. Botni ochib test qilish
+
+### Production
+
+- HTTPS albatta kerak
+- Environment variables xavfsizligini ta'minlang
+- Database backup oling
+- Error monitoring qo'shing (Sentry)
+- Rate limiting qo'shing
+
+---
+
+## 🐛 Muammolar
+
+Agar muammo bo'lsa:
+
+1. Node.js versiyasi 16+ ekanligini tekshiring
+2. `.env` fayllar to'g'ri sozlanganligini tekshiring
+3. Bot token va Telegram ID to'g'riligini tekshiring
+4. Port 3000 bo'sh ekanligini tekshiring
+
+---
+
+## 📞 Aloqa
+
+Savollar bo'lsa, issue oching yoki PR yuboring!
+
+---
+
+**Made with ❤️ for Tashkent barbers and clients**
+
+🇺🇿 O'zbekiston | 🏪 CutSpace | 💈 Sartaroshxona
+
+---
+
+## 🎯 Quick Start
+
+```bash
+# Backend
+cd backend
+npm install
+cp .env.example .env  # Edit with your tokens
+npm start
+
+# Frontend (yangi terminal)
+cd frontend
+npm install
+cp .env.example .env
+npm run dev
+
+# Visit: http://localhost:5173
+# For barber panel: http://localhost:5173/?role=barber
+```
+
+**Tayyor! 🎉**
+
+

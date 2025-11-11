@@ -1,0 +1,8 @@
+# Copy this file to .env and fill in your values
+
+# Backend API URL
+# For local development: http://localhost:3000/api
+# For production: https://your-backend-domain.com/api
+VITE_API_URL=http://localhost:3000/api
+
+

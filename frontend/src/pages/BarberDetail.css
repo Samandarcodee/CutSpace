@@ -1,0 +1,160 @@
+.barber-detail-page {
+  padding-bottom: 20px;
+}
+
+.back-button {
+  background: none;
+  border: none;
+  color: var(--tg-theme-button-color);
+  font-size: 16px;
+  padding: 8px 0;
+  margin-bottom: 16px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.barber-profile {
+  text-align: center;
+  padding: 20px;
+  background: var(--tg-theme-secondary-bg-color);
+  border-radius: 16px;
+  margin-bottom: 20px;
+}
+
+.barber-profile-avatar {
+  font-size: 80px;
+  margin-bottom: 16px;
+}
+
+.barber-profile-name {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--tg-theme-text-color);
+}
+
+.barber-profile-rating {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.barber-profile-description {
+  color: var(--tg-theme-hint-color);
+  line-height: 1.5;
+}
+
+.services-section {
+  margin-bottom: 20px;
+}
+
+.services-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.service-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: var(--tg-theme-secondary-bg-color);
+  border-radius: 12px;
+}
+
+.service-card-name {
+  font-size: 16px;
+  color: var(--tg-theme-text-color);
+  font-weight: 500;
+}
+
+.service-card-price {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--tg-theme-button-color);
+}
+
+.reviews-section {
+  margin-top: 24px;
+}
+
+.reviews-header {
+  margin-bottom: 16px;
+}
+
+.review-form {
+  background: var(--tg-theme-secondary-bg-color);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.star-rating {
+  display: flex;
+  gap: 8px;
+}
+
+.star-button {
+  background: none;
+  border: none;
+  font-size: 32px;
+  cursor: pointer;
+  opacity: 0.3;
+  transition: all 0.2s;
+  padding: 4px;
+}
+
+.star-button.active {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
+}
+
+.reviews-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.review-card {
+  background: var(--tg-theme-secondary-bg-color);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.review-author {
+  font-weight: 600;
+  color: var(--tg-theme-text-color);
+}
+
+.review-rating {
+  font-size: 14px;
+}
+
+.review-comment {
+  color: var(--tg-theme-text-color);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.review-date {
+  font-size: 12px;
+  color: var(--tg-theme-hint-color);
+}
+
+

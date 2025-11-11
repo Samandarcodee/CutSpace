@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sartaroshxonalar Admin - CutSpace</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1 { 
+            color: white; 
+            margin-bottom: 30px; 
+            text-align: center;
+            font-size: 32px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 15px;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        textarea { 
+            min-height: 100px; 
+            resize: vertical;
+            line-height: 1.6;
+        }
+        
+        /* File Upload Styles */
+        .file-upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 16px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f9fafb;
+        }
+        .file-upload-area:hover {
+            background: #f3f4f6;
+            border-color: #764ba2;
+            transform: scale(1.02);
+        }
+        .file-upload-area input[type="file"] {
+            display: none;
+        }
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        .upload-text {
+            color: #667eea;
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+        .upload-hint {
+            color: #9ca3af;
+            font-size: 13px;
+        }
+        
+        /* Image Preview Grid */
+        .image-preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+        .image-preview-item {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        .image-preview-item:hover {
+            transform: scale(1.05);
+        }
+        .image-preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .remove-image {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .image-preview-item:hover .remove-image {
+            opacity: 1;
+        }
+        
+        .btn {
+            padding: 16px 32px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #4b5563;
+            margin-left: 12px;
+        }
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+        
+        .alert {
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+        
+        .shop-card {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            border: 2px solid #e5e7eb;
+            transition: all 0.3s;
+        }
+        .shop-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+        }
+        .shop-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+        .shop-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1f2937;
+        }
+        .shop-actions button {
+            padding: 8px 16px;
+            margin-left: 8px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .btn-edit {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-delete {
+            background: #ef4444;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        
+        small {
+            color: #6b7280;
+            font-size: 13px;
+            display: block;
+            margin-top: 4px;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏪 Sartaroshxonalar Admin Panel</h1>
+        
+        <div class="card">
+            <h2 style="margin-bottom: 24px;">Yangi Sartaroshxona Qo'shish</h2>
+            <div id="message"></div>
+            
+            <form id="barbershopForm" onsubmit="addBarbershop(event)">
+                <div class="form-group">
+                    <label>Nomi *</label>
+                    <input type="text" id="name" required placeholder="Premium Barber Lounge">
+                </div>
+
+                <div class="form-group">
+                    <label>Tavsif</label>
+                    <textarea id="description" placeholder="Professional sartaroshlar, zamonaviy xizmat, qulay muhit..."></textarea>
+                    <small>Sartaroshxona haqida qisqacha ma'lumot</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Manzil *</label>
+                    <input type="text" id="address" required placeholder="Amir Temur ko'chasi 15, Tashkent">
+                </div>
+
+                <div class="form-group">
+                    <label>Telefon</label>
+                    <input type="tel" id="phone" placeholder="+998 90 123 45 67">
+                </div>
+
+                <div class="form-group">
+                    <label>Xizmatlar (har birini yangi qatorda)</label>
+                    <textarea id="services" rows="4" placeholder="Soch olish - 50,000 so'm
+Soqol qirish - 30,000 so'm
+VIP xizmat - 100,000 so'm"></textarea>
+                    <small>Har bir xizmatni yangi qatorga yozing</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Rasmlar</label>
+                    
+                    <!-- File Upload Area -->
+                    <div class="file-upload-area" onclick="document.getElementById('imageInput').click()">
+                        <input type="file" 
+                               id="imageInput" 
+                               accept="image/*" 
+                               multiple 
+                               onchange="handleImageUpload(event)">
+                        <div class="upload-icon">📸</div>
+                        <div class="upload-text">Rasm yuklash uchun bosing</div>
+                        <div class="upload-hint">yoki rasmlarni bu yerga tashlang</div>
+                        <div class="upload-hint" style="margin-top: 8px;">PNG, JPG, WEBP (maksimal 5MB)</div>
+                    </div>
+
+                    <!-- Image Preview Grid -->
+                    <div id="imagePreviewGrid" class="image-preview-grid"></div>
+                </div>
+
+                <div style="margin-top: 32px; display: flex; justify-content: space-between; align-items: center;">
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        ✅ Qo'shish
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="resetForm()">
+                        Tozalash
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2 style="margin-bottom: 20px;">📊 Barcha Sartaroshxonalar</h2>
+            <div id="shopsList"></div>
+        </div>
+    </div>
+
+    <script>
+        // Auto-detect API URL (works in both local and production)
+        const API = window.location.origin + '/api';
+        let uploadedImages = [];
+
+        async function handleImageUpload(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+
+            const uploadBtn = document.getElementById('submitBtn');
+            uploadBtn.innerHTML = '<span class="loading"></span> Yuklanmoqda...';
+            uploadBtn.disabled = true;
+
+            for (let file of files) {
+                if (file.size > 5 * 1024 * 1024) {
+                    showMessage('❌ Fayl hajmi 5MB dan kichik bo\'lishi kerak: ' + file.name, 'error');
+                    continue;
+                }
+
+                const formData = new FormData();
+                formData.append('image', file);
+
+                try {
+                    const response = await fetch(`${API}/upload/barber-image`, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        uploadedImages.push(data.imageUrl);
+                        updateImagePreview();
+                        showMessage(`✅ ${file.name} yuklandi!`, 'success');
+                    } else {
+                        showMessage('❌ Xatolik: ' + data.error, 'error');
+                    }
+                } catch (err) {
+                    showMessage('❌ Yuklashda xatolik: ' + file.name, 'error');
+                    console.error(err);
+                }
+            }
+
+            uploadBtn.innerHTML = '✅ Qo\'shish';
+            uploadBtn.disabled = false;
+            event.target.value = ''; // Reset file input
+        }
+
+        function updateImagePreview() {
+            const grid = document.getElementById('imagePreviewGrid');
+            grid.innerHTML = uploadedImages.map((imgPath, index) => `
+                <div class="image-preview-item">
+                    <img src="${window.location.origin}${imgPath}" alt="Preview ${index + 1}">
+                    <button class="remove-image" onclick="removeImage(${index})">×</button>
+                </div>
+            `).join('');
+        }
+
+        function removeImage(index) {
+            uploadedImages.splice(index, 1);
+            updateImagePreview();
+            showMessage('🗑️ Rasm o\'chirildi', 'success');
+        }
+
+        async function addBarbershop(event) {
+            event.preventDefault();
+
+            const servicesText = document.getElementById('services').value.trim();
+            const services = servicesText
+                .split('\n')
+                .map(s => s.trim())
+                .filter(s => s.length > 0);
+
+            const shopData = {
+                name: document.getElementById('name').value.trim(),
+                description: document.getElementById('description').value.trim(),
+                address: document.getElementById('address').value.trim(),
+                phone: document.getElementById('phone').value.trim() || null,
+                services: services,
+                images: uploadedImages
+            };
+
+            if (!shopData.name || !shopData.address) {
+                showMessage('❌ Nomi va manzil majburiy!', 'error');
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.innerHTML = '<span class="loading"></span> Saqlanmoqda...';
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch(`${API}/admin/barbershops`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(shopData)
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    showMessage('✅ Sartaroshxona muvaffaqiyatli qo\'shildi!', 'success');
+                    resetForm();
+                    loadBarbershops();
+                } else {
+                    showMessage('❌ Xatolik: ' + (data.error || 'Noma\'lum xato'), 'error');
+                }
+            } catch (err) {
+                showMessage('❌ Server bilan bog\'lanib bo\'lmadi', 'error');
+                console.error(err);
+            } finally {
+                submitBtn.innerHTML = '✅ Qo\'shish';
+                submitBtn.disabled = false;
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('barbershopForm').reset();
+            uploadedImages = [];
+            updateImagePreview();
+            document.getElementById('message').innerHTML = '';
+        }
+
+        function showMessage(text, type) {
+            const msg = document.getElementById('message');
+            msg.className = `alert alert-${type}`;
+            msg.textContent = text;
+            setTimeout(() => msg.innerHTML = '', 5000);
+        }
+
+        async function loadBarbershops() {
+            try {
+                const response = await fetch(`${API}/barbershops`);
+                const shops = await response.json();
+                
+                const shopsList = document.getElementById('shopsList');
+                if (shops.length === 0) {
+                    shopsList.innerHTML = '<p style="text-align: center; color: #9ca3af; padding: 40px;">Hozircha sartaroshxona yo\'q</p>';
+                    return;
+                }
+
+                shopsList.innerHTML = shops.map(shop => `
+                    <div class="shop-card">
+                        <div class="shop-header">
+                            <div>
+                                <div class="shop-name">${shop.name}</div>
+                                <div style="color: #6b7280; margin-top: 4px;">📍 ${shop.address}</div>
+                                ${shop.phone ? `<div style="color: #6b7280; margin-top: 2px;">📞 ${shop.phone}</div>` : ''}
+                            </div>
+                            <div class="shop-actions">
+                                <button class="btn-edit" onclick="editBarbershop('${shop.id}')">✏️</button>
+                                <button class="btn-delete" onclick="deleteBarbershop('${shop.id}', '${shop.name}')">🗑️</button>
+                            </div>
+                        </div>
+                        <div style="margin-top: 12px;">
+                            <strong>Xizmatlar:</strong>
+                            <div style="margin-top: 6px;">
+                                ${shop.services.slice(0, 3).map(s => `<span style="display: inline-block; background: #e0e7ff; color: #4338ca; padding: 4px 12px; border-radius: 6px; margin: 4px 4px 4px 0; font-size: 13px;">${s}</span>`).join('')}
+                                ${shop.services.length > 3 ? `<span style="color: #9ca3af;">+${shop.services.length - 3} ta</span>` : ''}
+                            </div>
+                        </div>
+                        ${shop.images && shop.images.length > 0 ? `
+                            <div style="margin-top: 12px;">
+                                <strong>Rasmlar:</strong>
+                                <div style="display: flex; gap: 8px; margin-top: 8px; overflow-x: auto;">
+                                    ${shop.images.map(img => `<img src="${window.location.origin}${img}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;" />`).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error(err);
+                showMessage('❌ Ma\'lumotlarni yuklashda xatolik', 'error');
+            }
+        }
+
+        async function deleteBarbershop(id, name) {
+            if (!confirm(`"${name}" ni o'chirishni xohlaysizmi?`)) return;
+
+            try {
+                const response = await fetch(`${API}/admin/barbershops/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showMessage('✅ O\'chirildi!', 'success');
+                    loadBarbershops();
+                } else {
+                    showMessage('❌ O\'chirishda xatolik', 'error');
+                }
+            } catch (err) {
+                showMessage('❌ Server bilan bog\'lanib bo\'lmadi', 'error');
+            }
+        }
+
+        function editBarbershop(id) {
+            alert('Tahrirlash funksiyasi tez orada qo\'shiladi!');
+        }
+
+        // Drag & Drop support
+        const uploadArea = document.querySelector('.file-upload-area');
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#764ba2';
+            uploadArea.style.background = '#f3f4f6';
+        });
+        uploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#667eea';
+            uploadArea.style.background = '#f9fafb';
+        });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#667eea';
+            uploadArea.style.background = '#f9fafb';
+            document.getElementById('imageInput').files = e.dataTransfer.files;
+            handleImageUpload({ target: document.getElementById('imageInput') });
+        });
+
+        // Load data on page load
+        loadBarbershops();
+    </script>
+</body>
+</html>
+
