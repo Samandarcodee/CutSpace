@@ -43,6 +43,20 @@ db.exec(`
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (barber_id) REFERENCES barbers(id)
   );
+
+  CREATE TABLE IF NOT EXISTS barbershops (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    description TEXT,
+    address TEXT NOT NULL,
+    phone TEXT,
+    services TEXT NOT NULL,
+    images TEXT NOT NULL,
+    rating REAL DEFAULT 0,
+    review_count INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
 `);
 
 // Seed initial barbers data
@@ -233,6 +247,59 @@ export const addBarber = (barber) => {
     JSON.stringify(barber.services)
   );
   return result.lastInsertRowid;
+};
+
+// Barbershops functions
+export const getAllBarbershops = () => {
+  const stmt = db.prepare('SELECT * FROM barbershops ORDER BY created_at DESC');
+  return stmt.all();
+};
+
+export const getBarbershopById = (id) => {
+  const stmt = db.prepare('SELECT * FROM barbershops WHERE id = ?');
+  return stmt.get(id);
+};
+
+export const createBarbershop = (barbershop) => {
+  const stmt = db.prepare(`
+    INSERT INTO barbershops (name, description, address, phone, services, images, rating, review_count)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  const result = stmt.run(
+    barbershop.name,
+    barbershop.description || null,
+    barbershop.address,
+    barbershop.phone || null,
+    JSON.stringify(barbershop.services ?? []),
+    JSON.stringify(barbershop.images ?? []),
+    barbershop.rating ?? 0,
+    barbershop.reviewCount ?? 0
+  );
+  return result.lastInsertRowid;
+};
+
+export const updateBarbershop = (id, barbershop) => {
+  const stmt = db.prepare(`
+    UPDATE barbershops
+    SET name = ?, description = ?, address = ?, phone = ?, services = ?, images = ?, updated_at = CURRENT_TIMESTAMP
+    WHERE id = ?
+  `);
+  const result = stmt.run(
+    barbershop.name,
+    barbershop.description || null,
+    barbershop.address,
+    barbershop.phone || null,
+    JSON.stringify(barbershop.services ?? []),
+    JSON.stringify(barbershop.images ?? []),
+    id
+  );
+  return result.changes;
+};
+
+export const deleteBarbershop = (id) => {
+  const stmt = db.prepare('DELETE FROM barbershops WHERE id = ?');
+  const result = stmt.run(id);
+  return result.changes;
 };
 
 export default db;

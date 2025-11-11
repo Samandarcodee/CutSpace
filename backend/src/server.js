@@ -17,7 +17,12 @@ import {
   updateBookingStatus,
   createReview,
   getReviewsByBarber,
-  addBarber
+  addBarber,
+  getAllBarbershops,
+  getBarbershopById,
+  createBarbershop,
+  updateBarbershop,
+  deleteBarbershop
 } from './database.js';
 import { sendBookingNotification, sendStatusNotification } from './bot.js';
 
@@ -65,6 +70,135 @@ app.use(express.static(path.join(__dirname, '..', '..', 'public')));
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'CutSpace API is running' });
+});
+
+// Helper functions for barbershops
+const parseJsonArray = (value) => {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    return [];
+  }
+};
+
+const normalizeStringArray = (value) =>
+  Array.isArray(value)
+    ? value.map((item) => (typeof item === 'string' ? item.trim() : '')).filter(Boolean)
+    : [];
+
+const mapBarbershop = (row) => ({
+  id: String(row.id),
+  name: row.name,
+  description: row.description || '',
+  address: row.address,
+  phone: row.phone,
+  services: parseJsonArray(row.services),
+  images: parseJsonArray(row.images),
+  rating: row.rating ?? 0,
+  reviewCount: row.review_count ?? 0,
+  createdAt: row.created_at,
+  updatedAt: row.updated_at,
+});
+
+// Barbershops CRUD
+app.get('/api/barbershops', (req, res) => {
+  try {
+    const barbershops = getAllBarbershops().map(mapBarbershop);
+    res.json(barbershops);
+  } catch (error) {
+    console.error('Error fetching barbershops:', error);
+    res.status(500).json({ error: 'Failed to fetch barbershops' });
+  }
+});
+
+app.post('/api/admin/barbershops', (req, res) => {
+  try {
+    const { name, description, address, phone, services = [], images = [] } = req.body;
+
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: 'Nomi majburiy maydon' });
+    }
+
+    if (!address || !address.trim()) {
+      return res.status(400).json({ error: 'Manzil majburiy maydon' });
+    }
+
+    const barbershopId = createBarbershop({
+      name: name.trim(),
+      description: (description || '').trim(),
+      address: address.trim(),
+      phone: phone ? phone.trim() : null,
+      services: normalizeStringArray(services),
+      images: normalizeStringArray(images),
+    });
+
+    const created = getBarbershopById(barbershopId);
+    res.status(201).json(mapBarbershop(created));
+  } catch (error) {
+    console.error('Create barbershop error:', error);
+    res.status(500).json({ error: error.message || 'Failed to create barbershop' });
+  }
+});
+
+app.put('/api/admin/barbershops/:id', (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({ error: "Barbershop ID noto'g'ri" });
+    }
+
+    const existing = getBarbershopById(id);
+    if (!existing) {
+      return res.status(404).json({ error: 'Barbershop topilmadi' });
+    }
+
+    const { name, description, address, phone, services = [], images = [] } = req.body;
+
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: 'Nomi majburiy maydon' });
+    }
+
+    if (!address || !address.trim()) {
+      return res.status(400).json({ error: 'Manzil majburiy maydon' });
+    }
+
+    updateBarbershop(id, {
+      name: name.trim(),
+      description: (description || '').trim(),
+      address: address.trim(),
+      phone: phone ? phone.trim() : null,
+      services: normalizeStringArray(services),
+      images: normalizeStringArray(images),
+    });
+
+    const updated = getBarbershopById(id);
+    res.json(mapBarbershop(updated));
+  } catch (error) {
+    console.error('Update barbershop error:', error);
+    res.status(500).json({ error: error.message || 'Failed to update barbershop' });
+  }
+});
+
+app.delete('/api/admin/barbershops/:id', (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({ error: "Barbershop ID noto'g'ri" });
+    }
+
+    const existing = getBarbershopById(id);
+    if (!existing) {
+      return res.status(404).json({ error: 'Barbershop topilmadi' });
+    }
+
+    deleteBarbershop(id);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Delete barbershop error:', error);
+    res.status(500).json({ error: error.message || 'Failed to delete barbershop' });
+  }
 });
 
 // Get all barbers
