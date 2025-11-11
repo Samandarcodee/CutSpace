@@ -59,6 +59,9 @@ const upload = multer({
 // Serve uploaded images
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
+// Serve public files (admin panel)
+app.use(express.static(path.join(__dirname, '..', '..', 'public')));
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'CutSpace API is running' });
