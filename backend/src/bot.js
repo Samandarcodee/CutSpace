@@ -3,10 +3,69 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });
+// Check if bot token exists
+const botToken = process.env.TELEGRAM_BOT_TOKEN;
+let bot = null;
+
+if (!botToken) {
+  console.warn('⚠️  TELEGRAM_BOT_TOKEN environment variable is not set!');
+  console.warn('⚠️  Bot will not work. Please set TELEGRAM_BOT_TOKEN in Render Environment Variables.');
+  
+  // Create a dummy bot object to prevent crashes
+  bot = {
+    sendMessage: async () => {
+      console.warn('⚠️  Bot not initialized - cannot send message');
+    },
+    onText: () => {},
+    on: () => {}
+  };
+} else {
+  try {
+    bot = new TelegramBot(botToken, { polling: true });
+    console.log('✅ Telegram bot initialized successfully');
+    
+    // Bot commands
+    bot.onText(/\/start/, (msg) => {
+      const chatId = msg.chat.id;
+      const firstName = msg.from.first_name;
+      
+      bot.sendMessage(chatId, `Assalomu alaykum, ${firstName}! 👋
+
+🏪 CutSpace - Toshkent shahridagi eng yaxshi sartaroshxona.
+
+📱 Ilova manzili: https://your-app.onrender.com/
+
+Bot ishlamoqda! ✅`);
+    });
+
+    bot.on('polling_error', (error) => {
+      console.error('❌ Telegram bot polling error:', error.message);
+      console.error('❌ Check your TELEGRAM_BOT_TOKEN in Render Environment Variables');
+    });
+
+    console.log('🤖 Telegram bot started and listening for commands');
+  } catch (error) {
+    console.error('❌ Failed to initialize Telegram bot:', error.message);
+    console.error('❌ Please check your TELEGRAM_BOT_TOKEN in Render Environment Variables');
+    
+    // Create a dummy bot object to prevent crashes
+    bot = {
+      sendMessage: async () => {
+        console.warn('⚠️  Bot not initialized - cannot send message');
+      },
+      onText: () => {},
+      on: () => {}
+    };
+  }
+}
 
 // Send notification when new booking is created
 export const sendBookingNotification = async (booking, barberTelegramId) => {
+  if (!botToken || !bot) {
+    console.warn('⚠️  Bot not initialized - skipping notification');
+    return;
+  }
+
   const message = `🔔 Yangi band qilish!
 
 👤 Mijoz: ${booking.client_name}
@@ -20,19 +79,26 @@ Sartarosh paneliga o'ting va javob bering.`;
     // Send to admin (if set)
     if (process.env.ADMIN_TELEGRAM_ID) {
       await bot.sendMessage(process.env.ADMIN_TELEGRAM_ID, message);
+      console.log('✅ Booking notification sent to admin');
     }
     
     // Send to barber if they have telegram_id
     if (barberTelegramId) {
       await bot.sendMessage(barberTelegramId, message);
+      console.log('✅ Booking notification sent to barber');
     }
   } catch (error) {
-    console.error('Error sending booking notification:', error);
+    console.error('❌ Error sending booking notification:', error.message);
   }
 };
 
 // Send notification when booking status changes
 export const sendStatusNotification = async (booking, status) => {
+  if (!botToken || !bot) {
+    console.warn('⚠️  Bot not initialized - skipping notification');
+    return;
+  }
+
   let message = '';
   
   if (status === 'accepted') {
@@ -55,30 +121,10 @@ Iltimos, boshqa vaqtni tanlang.`;
 
   try {
     await bot.sendMessage(booking.client_telegram_id, message);
+    console.log('✅ Status notification sent to client');
   } catch (error) {
-    console.error('Error sending status notification:', error);
+    console.error('❌ Error sending status notification:', error.message);
   }
 };
 
-// Bot commands
-bot.onText(/\/start/, (msg) => {
-  const chatId = msg.chat.id;
-  const firstName = msg.from.first_name;
-  
-  bot.sendMessage(chatId, `Assalomu alaykum, ${firstName}! 👋
-
-🏪 CutSpace - Toshkent shahridagi eng yaxshi sartaroshxona.
-
-📱 Ilova manzili: http://localhost:5173/
-
-Development rejimida ishlamoqda.`);
-});
-
-bot.on('polling_error', (error) => {
-  console.log('Polling error:', error);
-});
-
-console.log('🤖 Telegram bot started');
-
 export default bot;
-
