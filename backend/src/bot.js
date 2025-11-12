@@ -21,31 +21,89 @@ if (!botToken) {
   };
 } else {
   try {
-    bot = new TelegramBot(botToken, { polling: true });
+    console.log('🔄 Initializing Telegram bot...');
+    bot = new TelegramBot(botToken, { 
+      polling: {
+        interval: 1000,
+        autoStart: true,
+        params: {
+          timeout: 10
+        }
+      }
+    });
+    
     console.log('✅ Telegram bot initialized successfully');
     
-    // Bot commands
-    bot.onText(/\/start/, (msg) => {
-      const chatId = msg.chat.id;
-      const firstName = msg.from.first_name;
-      
-      bot.sendMessage(chatId, `Assalomu alaykum, ${firstName}! 👋
+    // Bot commands - /start
+    bot.onText(/\/start/, async (msg) => {
+      try {
+        const chatId = msg.chat.id;
+        const firstName = msg.from?.first_name || 'Foydalanuvchi';
+        
+        console.log(`📥 /start command received from chat ${chatId}`);
+        
+        const welcomeMessage = `Assalomu alaykum, ${firstName}! 👋
 
 🏪 CutSpace - Toshkent shahridagi eng yaxshi sartaroshxona.
 
 📱 Ilova manzili: https://your-app.onrender.com/
 
-Bot ishlamoqda! ✅`);
+Bot ishlamoqda! ✅
+
+Quyidagi buyruqlar mavjud:
+/start - Botni qayta ishga tushirish
+/help - Yordam`;
+
+        await bot.sendMessage(chatId, welcomeMessage);
+        console.log(`✅ Welcome message sent to chat ${chatId}`);
+      } catch (error) {
+        console.error('❌ Error handling /start command:', error.message);
+      }
     });
 
+    // Bot commands - /help
+    bot.onText(/\/help/, async (msg) => {
+      try {
+        const chatId = msg.chat.id;
+        const helpMessage = `📖 Yordam
+
+🏪 CutSpace bot orqali siz:
+- Sartaroshxonalarni ko'rishingiz mumkin
+- Band qilishingiz mumkin
+- Bandingiz holatini kuzatishingiz mumkin
+
+📱 Ilova: https://your-app.onrender.com/`;
+
+        await bot.sendMessage(chatId, helpMessage);
+        console.log(`✅ Help message sent to chat ${chatId}`);
+      } catch (error) {
+        console.error('❌ Error handling /help command:', error.message);
+      }
+    });
+
+    // Handle all messages (for debugging)
+    bot.on('message', (msg) => {
+      const chatId = msg.chat.id;
+      const text = msg.text;
+      console.log(`📨 Message received from chat ${chatId}: ${text}`);
+    });
+
+    // Error handlers
     bot.on('polling_error', (error) => {
       console.error('❌ Telegram bot polling error:', error.message);
+      console.error('❌ Error code:', error.code);
       console.error('❌ Check your TELEGRAM_BOT_TOKEN in Render Environment Variables');
     });
 
+    bot.on('error', (error) => {
+      console.error('❌ Telegram bot error:', error.message);
+    });
+
     console.log('🤖 Telegram bot started and listening for commands');
+    console.log('📋 Bot is ready to receive /start and /help commands');
   } catch (error) {
     console.error('❌ Failed to initialize Telegram bot:', error.message);
+    console.error('❌ Error stack:', error.stack);
     console.error('❌ Please check your TELEGRAM_BOT_TOKEN in Render Environment Variables');
     
     // Create a dummy bot object to prevent crashes
